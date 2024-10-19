@@ -14,12 +14,14 @@ java {
 	}
 }
 
-repositories {
+repositories {/*外部ライブラリを何処からダウンロードしてきたか？（ここではmavenCentralから）*/
 	mavenCentral()
 }
 
-dependencies {
+dependencies {/*依存関係及びスターターの編集*/
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	/*Apache commons-Lang：便利機能やユーティリティの機能を持つ。*/
+	implementation 'org.apache.commons:commons-lang3:3.17.0'
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
