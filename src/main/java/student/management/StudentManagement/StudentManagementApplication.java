@@ -3,9 +3,11 @@ package student.management.StudentManagement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 @RestController
@@ -18,36 +20,18 @@ public class StudentManagementApplication {
         SpringApplication.run(StudentManagementApplication.class, args);
     }
 
-    @GetMapping("/student")
-    public String getStudent(@RequestParam String name){
-        Student student = repository.searchByName(name);
-        if(student != null) {
-            return student.getName() + " " + student.getAge() + "歳";
-        } else {
-            return "Student not found";
-        }
-    }
-    /*repositoryとは、データや情報、知識や成果物を蓄積するデータベースの
-     * ことを示す。このコードでは、データベースからStudentRepositoryという
-     * インターフェースを使用してSQLからデータを呼び出し、見つからない場合は
-     * "Student not found"を返している。。*/
-
-    @PostMapping("/student")
-    public void registerStudent(String name, int age){
-        repository.registerStudent(name, age);
+    @GetMapping("/studentList")
+    public List<Student> getStudentList() {
+        return repository.searchStudents();
     }
 
-    @PatchMapping("/student")
-    public void updateStudent(String name, int age){
-        repository.updateStudent(name,age);
+    @GetMapping("/allCourses")
+    public List<StudentsCourses> getAllCourses() {
+        return repository.searchAllCourses();
     }
 
-    @DeleteMapping("/student")
-    public void deleteStudent(String name){
-        repository.deleteStudent(name);
-    }
-    @GetMapping("/students")
-    public List<Student> getAllStudents() {
-        return repository.getAllStudents();
+    @GetMapping("/studentsWithCourses")
+    public List<StudentsWithCourses> getStudentsWithCourses() {
+        return repository.searchStudentsWithCourses();
     }
 }
