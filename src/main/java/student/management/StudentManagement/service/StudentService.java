@@ -53,7 +53,7 @@ public class StudentService {
 
     public List<Student> fetchStudentsFromApi() {
         try {
-            // URLの設定
+            /* URLの設定 */
             URL url = new URL("http://localhost:8080/studentList");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             con.setRequestMethod("GET");
