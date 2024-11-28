@@ -9,3 +9,5 @@ public class StudentManagementApplication {
         SpringApplication.run(StudentManagementApplication.class, args);
     }
 }
+/*クラスを分けることで、mainとなるStudentManagementApplicationクラスのコードの
+* 可読性が高くなる。*/

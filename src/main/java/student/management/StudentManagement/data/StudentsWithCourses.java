@@ -20,4 +20,3 @@ public class StudentsWithCourses {
     private Date startDate;
     private Date endDate;
 }
-

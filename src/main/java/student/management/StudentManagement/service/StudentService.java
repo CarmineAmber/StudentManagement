@@ -20,15 +20,15 @@ import java.util.List;
 @Service
 public class StudentService {
 
-    private StudentRepository repository;
+    private final StudentRepository repository;
 
     @Autowired
 
     public StudentService(StudentRepository repository) {
         this.repository = repository;
-        /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
-        インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
-        repositoryを呼び出せる。これを行うことで上書きが容易になる。*/
+         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
+         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
+         repositoryを呼び出せる。これを行うことで上書きが容易になる。*/
     }
 
     public List<Student> searchStudentList() {
@@ -44,24 +44,30 @@ public class StudentService {
     }
 
     public List<Student> searchStudentsIn30s() {
-        return repository.searchStudentsIn30s();
+        return repository.searchStudentsInAgeRange(30, 39);
     }
 
-    public List<StudentsWithCourses> searchJavaCourse() {
-        return repository.searchJavaCourse();
+    public List<StudentsWithCourses> searchStudentsByCourseName(String courseName) {
+        return repository.searchStudentsByCourseName(courseName);
     }
 
     public List<Student> fetchStudentsFromApi() {
         try {
-            /* URLの設定 */
+            /*URLの設定*/
             URL url = new URL("http://localhost:8080/studentList");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
+            /*HttpURLConnectionとは、httpを基にget,post,put,deleteなどのリクエストを
+             * サポートする。このコードでは、下記のcon.setRequestMethod("GET");と
+             * con.setRequestProperty("Accept", "application/json");という
+             * リクエストをサポートしている。*/
             con.setRequestMethod("GET");
             con.setRequestProperty("Accept", "application/json");
+            /*JAVAでAPI通信を使ってJSONを取得するための接続設定。*/
 
             // InputStreamの読み込み
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            /*UTF_8を設定しないと文字化けする。*/
             StringBuilder response = new StringBuilder();
             String line;
 
@@ -70,7 +76,8 @@ public class StudentService {
             }
             reader.close();
 
-            // JSONのパース
+            /*JSONのパース（JSON形式の文字列をJAVAオブジェクトに変換する）。ObjectMapperとは、JAVAオブジェクトと
+            JSONのパースを簡単にするためのjacksonパッケージの１つ。*/
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -84,3 +91,10 @@ public class StudentService {
         return null;
     }
 }
+        /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
+        インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
+        repositoryを呼び出せる。これを行うことで上書きが容易になる。
+        @Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
+        インスタンス化を１回で行える。また、クラス内のnew演算子を消すことができる。つまりこのクラスでは
+        @Autowiredを使うことで全てのpublic変数をインスタンス化させ、newをいちいち記述する必要が
+        ないようにしている。*/
