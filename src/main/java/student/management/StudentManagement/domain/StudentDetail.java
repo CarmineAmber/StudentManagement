@@ -12,7 +12,6 @@ import java.util.List;
 @Setter
 @ToString
 public class StudentDetail {
-
     private Student student;
     private List<StudentsCourses> studentsCourses;
 }

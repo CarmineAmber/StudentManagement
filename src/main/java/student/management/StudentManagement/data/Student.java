@@ -21,4 +21,4 @@ public class Student {
     private Boolean IsDeleted; //論理削除
 }
 /*このprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。
-* private変数は、メソッドを経由しないと変数の値を格納できなくなる。*/
+ * private変数は、メソッドを経由しないと変数の値を格納できなくなる。*/

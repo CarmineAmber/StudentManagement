@@ -10,4 +10,4 @@ public class StudentManagementApplication {
     }
 }
 /*クラスを分けることで、mainとなるStudentManagementApplicationクラスのコードの
-* 可読性が高くなる。*/
+ * 可読性が高くなる。*/

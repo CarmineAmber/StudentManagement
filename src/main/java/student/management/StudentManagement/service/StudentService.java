@@ -26,10 +26,10 @@ public class StudentService {
 
     public StudentService(StudentRepository repository) {
         this.repository = repository;
-         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
-         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
-         repositoryを呼び出せる。これを行うことで上書きが容易になる。*/
     }
+    /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
+    インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
+    repositoryを呼び出せる。これを行うことで上書きが容易になる。*/
 
     public List<Student> searchStudentList() {
         return repository.searchStudents();
