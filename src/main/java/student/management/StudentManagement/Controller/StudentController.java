@@ -5,11 +5,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.ui.ModelMap;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
 import student.management.StudentManagement.service.StudentService;
+/*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
 import java.util.List;
 
