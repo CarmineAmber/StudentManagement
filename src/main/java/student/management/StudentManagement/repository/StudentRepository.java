@@ -27,7 +27,7 @@ public interface StudentRepository {
                     age,
                     gender,
                     remark,
-                    isdeleted AS IsDeleted
+                    isdeleted AS isDeleted
                 FROM
                     students
             """)

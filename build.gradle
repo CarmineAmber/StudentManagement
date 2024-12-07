@@ -25,7 +25,10 @@ repositories {/*外部ライブラリを何処からダウンロードしてき�
 }
 
 dependencies {/*依存関係及びスターターの編集*/
+	/*Spring Boot*/
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	/*Thymeleaf*/
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	/*Apache commons-Lang：便利機能やユーティリティの機能を持つ。*/
 	implementation 'org.apache.commons:commons-lang3:3.17.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
