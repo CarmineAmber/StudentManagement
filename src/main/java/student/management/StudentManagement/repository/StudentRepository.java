@@ -1,5 +1,6 @@
 package student.management.StudentManagement.repository;
 
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -117,6 +118,13 @@ public interface StudentRepository {
     List<StudentsWithCourses> searchStudentsByCourseName(
             @Param("courseName") String courseName
     );
+
+    /*名前のみを登録する場合*/
+    @Insert("""
+            INSERT INTO students (name)
+            VALUES (#{name})
+            """)
+    void insertStudentName(@Param("name") String name);
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

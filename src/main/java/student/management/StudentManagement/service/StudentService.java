@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.repository.StudentRepository;
 
 import java.io.BufferedReader;
@@ -89,6 +90,14 @@ public class StudentService {
             e.printStackTrace();
         }
         return null;
+    }
+    public void registerStudentName(String studentName) {
+        if (studentName == null || studentName.isEmpty()) {
+            throw new IllegalArgumentException("名前が空です。");
+        }
+
+        // リポジトリを使用して名前を登録
+        repository.insertStudentName(studentName);
     }
 }
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
