@@ -3,11 +3,15 @@ package student.management.StudentManagement.Controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
@@ -58,6 +62,26 @@ public class StudentController {
     public List<student.management.StudentManagement.StudentsWithCourses>
     getStudentsByCourseName(@RequestParam String courseName) {
         return service.searchStudentsByCourseName(courseName);
+    }
+
+    @GetMapping("/newStudent")
+    public String newStudent(Model model) {
+        StudentDetail studentDetail = new StudentDetail();
+        studentDetail.setStudent(new Student()); // Student を初期化
+        model.addAttribute("studentDetail", studentDetail);
+        return "registerStudents";
+    }
+
+    @PostMapping("/registerStudent")
+    public String registerStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result) {
+        if (result.hasErrors()) {
+            return "registerStudents";
+        }
+
+        // service インスタンスを使用して登録処理を呼び出す
+        service.registerStudentName(studentDetail.getStudent().getStudentName());
+
+        return "redirect:/studentList";
     }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで

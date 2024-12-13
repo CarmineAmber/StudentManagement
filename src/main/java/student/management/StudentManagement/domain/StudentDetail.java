@@ -15,5 +15,5 @@ public class StudentDetail {
     private Student student;
     private List<StudentsCourses> studentsCourses;
     /*studentとstudentCoursesの２つのクラスに表記されているものを
-    * 繋ぎ合わせ、StudentDetailを作っている。*/
+    * 繋ぎ合わせ、StudentDetailクラスを作っている。*/
 }
