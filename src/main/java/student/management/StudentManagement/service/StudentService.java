@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -16,7 +17,10 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class StudentService {
@@ -91,13 +95,43 @@ public class StudentService {
         }
         return null;
     }
-    public void registerStudentName(String studentName) {
-        if (studentName == null || studentName.isEmpty()) {
-            throw new IllegalArgumentException("名前が空です。");
-        }
 
-        // リポジトリを使用して名前を登録
-        repository.insertStudentName(studentName);
+    @Transactional
+    public void registerStudent(StudentDetail studentDetail) {
+        repository.registerStudent(studentDetail.getStudent());
+        studentDetail.getStudent().getId();
+        /*このWebアプリでは、サービスにトランザクション処理を記載している。
+         * サービスにトランザクション処理を記載することを推奨している。*/
+        /*TODO：コース情報登録も行う。*/
+        for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
+            studentsCourses.setStudentId(studentDetail.getStudent().getId());
+            studentsCourses.setStartDate(LocalDateTime.now());
+            studentsCourses.setEndDate(LocalDateTime.now().plusYears(1));
+            repository.registerStudentsCourses(studentsCourses);
+        }
+    }
+
+    public Student findStudentById(Long id) {
+        return repository.findStudentById(id); // Repository に対応するメソッドを追加する
+    }
+
+    public List<StudentsCourses> findCoursesByStudentId(Long studentId) {
+        return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
+    }
+
+    @Transactional
+    public void updateStudent(StudentDetail studentDetail) {
+        repository.updateStudent(studentDetail.getStudent());
+        for (StudentsCourses course : studentDetail.getStudentsCourses()) {
+            if ( Objects.equals(course.getId(), null) ) {
+                course.setStudentId(studentDetail.getStudent().getId());
+                course.setStartDate(LocalDateTime.now());
+                course.setEndDate(LocalDateTime.now().plusYears(1));
+                repository.insertStudentsCourses(course);
+            } else {
+                repository.updateStudentsCourses(course);
+            }
+        }
     }
 }
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで

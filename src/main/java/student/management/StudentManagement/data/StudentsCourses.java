@@ -6,7 +6,6 @@ import lombok.Setter;
  * クラス宣言の前にimport lombok.Getter,import lombok.Setter,
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Getter
@@ -15,6 +14,6 @@ public class StudentsCourses {
     private int id;
     private String studentId;
     private String courseName;
-    private LocalDate startDate;
-    private LocalDate endDate;
+    private LocalDateTime startDate;
+    private LocalDateTime endDate;
 }
