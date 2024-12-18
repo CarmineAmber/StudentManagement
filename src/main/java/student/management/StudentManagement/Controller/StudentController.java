@@ -93,6 +93,13 @@ public class StudentController {
         service.updateStudent(studentDetail);
         return "redirect:/student/list"; // 更新後のリダイレクト先
     }
+
+    @GetMapping("/detail")
+    public String showStudentDetail(@RequestParam("id") Long id, Model model) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
+        model.addAttribute("studentDetail", studentDetail);
+        return "studentDetail";
+    }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
     インスタンス化を１回で行える。また、クラス内のnew演算子を消すことができる。つまりこのクラスでは
