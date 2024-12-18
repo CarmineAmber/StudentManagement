@@ -137,6 +137,68 @@ public interface StudentRepository {
             "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudentsCourses(StudentsCourses studentsCourses);
+
+    @Select("""
+    SELECT
+        id,
+        name AS studentName,
+        furigana,
+        nickname AS nickName,
+        email,
+        region,
+        age,
+        gender,
+        remark
+    FROM
+        students
+    WHERE
+        id = #{id}
+""")
+    Student findStudentById(@Param("id") Long id);
+
+    @Select("""
+    SELECT
+        course_name AS courseName,
+        start_date AS startDate,
+        end_date AS endDate
+    FROM
+        students_courses
+    WHERE
+        student_id = #{studentId}
+""")
+    List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
+
+
+    @Update("""
+    UPDATE students
+    SET
+        name = #{studentName},
+        furigana = #{furigana},
+        nickname = #{nickName},
+        email = #{email},
+        region = #{region},
+        age = #{age},
+        gender = #{gender},
+        remark = #{remark}
+    WHERE id = #{id}
+""")
+    void updateStudent(Student student);
+
+    @Update("""
+    UPDATE students_courses
+    SET
+        course_name = #{courseName},
+        start_date = #{startDate},
+        end_date = #{endDate}
+    WHERE id = #{id}
+""")
+    void updateStudentsCourses(StudentsCourses studentsCourses);
+
+    @Insert("""
+    INSERT INTO students_courses (student_id, course_name, start_date, end_date)
+    VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
+""")
+    void insertStudentsCourses(StudentsCourses studentsCourses);
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

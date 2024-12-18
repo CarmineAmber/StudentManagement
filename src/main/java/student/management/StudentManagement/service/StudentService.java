@@ -20,6 +20,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 public class StudentService {
@@ -95,21 +96,44 @@ public class StudentService {
         return null;
     }
 
-        @Transactional
-        public void registerStudent(StudentDetail studentDetail){
-            repository.registerStudent(studentDetail.getStudent());
-            studentDetail.getStudent().getId();
-            /*このWebアプリでは、サービスにトランザクション処理を記載している。
-            * サービスにトランザクション処理を記載することを推奨している。*/
-            /*TODO：コース情報登録も行う。*/
-            for(StudentsCourses studentsCourses:studentDetail.getStudentsCourses()){
-                studentsCourses.setStudentId(studentDetail.getStudent().getId());
-                studentsCourses.setStartDate(LocalDateTime.now());
-                studentsCourses.setEndDate(LocalDateTime.now().plusYears(1));
-                repository.registerStudentsCourses(studentsCourses);
+    @Transactional
+    public void registerStudent(StudentDetail studentDetail) {
+        repository.registerStudent(studentDetail.getStudent());
+        studentDetail.getStudent().getId();
+        /*このWebアプリでは、サービスにトランザクション処理を記載している。
+         * サービスにトランザクション処理を記載することを推奨している。*/
+        /*TODO：コース情報登録も行う。*/
+        for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
+            studentsCourses.setStudentId(studentDetail.getStudent().getId());
+            studentsCourses.setStartDate(LocalDateTime.now());
+            studentsCourses.setEndDate(LocalDateTime.now().plusYears(1));
+            repository.registerStudentsCourses(studentsCourses);
+        }
+    }
+
+    public Student findStudentById(Long id) {
+        return repository.findStudentById(id); // Repository に対応するメソッドを追加する
+    }
+
+    public List<StudentsCourses> findCoursesByStudentId(Long studentId) {
+        return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
+    }
+
+    @Transactional
+    public void updateStudent(StudentDetail studentDetail) {
+        repository.updateStudent(studentDetail.getStudent());
+        for (StudentsCourses course : studentDetail.getStudentsCourses()) {
+            if ( Objects.equals(course.getId(), null) ) {
+                course.setStudentId(studentDetail.getStudent().getId());
+                course.setStartDate(LocalDateTime.now());
+                course.setEndDate(LocalDateTime.now().plusYears(1));
+                repository.insertStudentsCourses(course);
+            } else {
+                repository.updateStudentsCourses(course);
             }
         }
     }
+}
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
         repositoryを呼び出せる。これを行うことで上書きが容易になる。
