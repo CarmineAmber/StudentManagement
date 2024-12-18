@@ -4,10 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -15,6 +12,8 @@ import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -67,7 +66,7 @@ public class StudentController {
     @GetMapping("/newStudent")
     public String newStudent(Model model) {
         StudentDetail studentDetail = new StudentDetail();
-        studentDetail.setStudent(new Student()); // Student を初期化
+        studentDetail.setStudentsCourses(Arrays.asList(new StudentsCourses()));  // 必要なら空リストを初期化
         model.addAttribute("studentDetail", studentDetail);
         return "registerStudents";
     }
@@ -75,14 +74,12 @@ public class StudentController {
     @PostMapping("/registerStudent")
     public String registerStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result) {
         if (result.hasErrors()) {
-            return "registerStudents";
+            return "registerStudents";  // 再度フォームを表示
         }
-
-        // service インスタンスを使用して登録処理を呼び出す
-        service.registerStudentName(studentDetail.getStudent().getStudentName());
-
+        service.registerStudent(studentDetail);
         return "redirect:/studentList";
     }
+
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
     インスタンス化を１回で行える。また、クラス内のnew演算子を消すことができる。つまりこのクラスでは

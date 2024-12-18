@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -16,6 +17,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -91,15 +94,22 @@ public class StudentService {
         }
         return null;
     }
-    public void registerStudentName(String studentName) {
-        if (studentName == null || studentName.isEmpty()) {
-            throw new IllegalArgumentException("名前が空です。");
-        }
 
-        // リポジトリを使用して名前を登録
-        repository.insertStudentName(studentName);
+        @Transactional
+        public void registerStudent(StudentDetail studentDetail){
+            repository.registerStudent(studentDetail.getStudent());
+            studentDetail.getStudent().getId();
+            /*このWebアプリでは、サービスにトランザクション処理を記載している。
+            * サービスにトランザクション処理を記載することを推奨している。*/
+            /*TODO：コース情報登録も行う。*/
+            for(StudentsCourses studentsCourses:studentDetail.getStudentsCourses()){
+                studentsCourses.setStudentId(studentDetail.getStudent().getId());
+                studentsCourses.setStartDate(LocalDateTime.now());
+                studentsCourses.setEndDate(LocalDateTime.now().plusYears(1));
+                repository.registerStudentsCourses(studentsCourses);
+            }
+        }
     }
-}
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
         repositoryを呼び出せる。これを行うことで上書きが容易になる。

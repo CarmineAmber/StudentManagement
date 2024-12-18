@@ -1,9 +1,6 @@
 package student.management.StudentManagement.repository;
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -125,6 +122,21 @@ public interface StudentRepository {
             VALUES (#{name})
             """)
     void insertStudentName(@Param("name") String name);
+
+    @Select("SELECT * FROM courses")
+    List<StudentsCourses> findAll();
+
+    @Insert("""
+    INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark, isDeleted)
+    VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark}, false)
+""")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void registerStudent(Student student);
+
+    @Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
+            "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void registerStudentsCourses(StudentsCourses studentsCourses);
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、
@@ -134,3 +146,5 @@ public interface StudentRepository {
    している。
    全件検索、全てのコース名を取得、受講生とコース情報を結合して取得の場合はそもそも#{}を利用するケースが
    ないため、文字列そのものがクエリに埋め込まれることはない。*/
+/*@Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
+            "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")は、一括でエイリアスをつけている。*/
