@@ -73,7 +73,7 @@ public class StudentController {
 
     @PostMapping("/registerStudent")
     public String registerStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result) {
-        if (result.hasErrors()) {
+        if ( result.hasErrors() ) {
             return "registerStudents";  // 再度フォームを表示
         }
         service.registerStudent(studentDetail);
@@ -81,9 +81,9 @@ public class StudentController {
     }
 
     @GetMapping("/update")
-    public String showUpdateStudentForm(Model model) {
-        // StudentDetail オブジェクトを作成してモデルに追加する
-        model.addAttribute("studentDetail", new StudentDetail());
+    public String showUpdateForm(Model model, @RequestParam Long id) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
+        model.addAttribute("studentDetail", studentDetail);
         return "updateStudents";
     }
 
@@ -107,3 +107,5 @@ public class StudentController {
  * （例えば、ExcelBasicと入れると[{"studentId":5,"studentName":"野島葵","furigana":"ノジマアオイ","nickName":
  * "TEST05","email":"TEST05","region":"愛媛","age":35,"gender":"女性","courlBasic","startDate":
  * "2024-11-09T15:00:00.000+00:00","endDate":"2025-11-08T15:00:00.000+00:00"}]と出てくる）*/
+
+/*GPTを使う場合、StudentServiceで動作しない可能性がある場合はrepositoryに変更するとうまくいくようだ。*/

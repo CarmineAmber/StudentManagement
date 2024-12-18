@@ -210,3 +210,4 @@ public interface StudentRepository {
    ないため、文字列そのものがクエリに埋め込まれることはない。*/
 /*@Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
             "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")は、一括でエイリアスをつけている。*/
+/*chatGPTを使ってうまく動作しない場合は、リポジトリをその都度作成する必要あり？*/
