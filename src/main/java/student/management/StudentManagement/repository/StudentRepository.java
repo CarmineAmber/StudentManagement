@@ -11,7 +11,7 @@ import java.util.List;
  * 全件検索や単一条件での検索が行えるクラス。*/
 
 @Mapper
-public interface StudentRepository {
+public interface StudentRepository{
 
     /* 全件検索を行う。 */
     @Select("""

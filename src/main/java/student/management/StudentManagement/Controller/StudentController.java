@@ -12,7 +12,6 @@ import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -94,11 +93,11 @@ public class StudentController {
         return "redirect:/student/list"; // 更新後のリダイレクト先
     }
 
-    @GetMapping("/detail")
-    public String showStudentDetail(@RequestParam("id") Long id, Model model) {
+    @GetMapping("/student/detail")
+    public String showStudentDetail(@RequestParam Long id, Model model) {
         StudentDetail studentDetail = service.getStudentDetailById(id);
         model.addAttribute("studentDetail", studentDetail);
-        return "studentDetail";
+        return "studentDetail"; // studentDetail.htmlを返す
     }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
