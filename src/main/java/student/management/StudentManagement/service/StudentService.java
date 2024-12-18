@@ -119,6 +119,18 @@ public class StudentService {
         return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
     }
 
+    public StudentDetail getStudentDetailById(Long id) {
+        // リポジトリから受講生情報を取得
+        Student student = repository.findStudentById(id);
+        List<StudentsCourses> courses = repository.findCoursesByStudentId(id);
+
+        StudentDetail detail = new StudentDetail();
+        detail.setStudent(student);
+        detail.setStudentsCourses(courses);
+
+        return detail;
+    }
+
     @Transactional
     public void updateStudent(StudentDetail studentDetail) {
         repository.updateStudent(studentDetail.getStudent());
