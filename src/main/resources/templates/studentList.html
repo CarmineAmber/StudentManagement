@@ -28,7 +28,7 @@
         <td th:text="${studentDetail?.student?.id}">ID</td>
         <td>
             <a th:if="${studentDetail?.student != null}"
-               th:href="@{/student/detail(id=${studentDetail.student.id})}"
+               th:href="@{/student/detail/{studentName}(studentName=${studentDetail.student.studentName})}"
                th:text="${studentDetail.student.studentName}">
                 名前
             </a>

@@ -143,6 +143,16 @@ public class StudentService {
             }
         }
     }
+    public StudentDetail getStudentDetailByName(String studentName) {
+        // 名前で検索する処理（リポジトリ層を呼び出す）
+        return repository.findByName(studentName);
+    }
+
+
+    public StudentDetail findByName(String studentName) {
+        // リポジトリを使ってデータを取得
+        return repository.findByName(studentName);
+    }
 }
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの

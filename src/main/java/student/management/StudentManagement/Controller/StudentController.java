@@ -1,5 +1,6 @@
 package student.management.StudentManagement.Controller;
 
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,6 +10,7 @@ import student.management.StudentManagement.Controller.converter.StudentConverte
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
 import student.management.StudentManagement.domain.StudentDetail;
+import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
@@ -79,8 +81,8 @@ public class StudentController {
         return "redirect:/studentList";
     }
 
-    @GetMapping("/update")
-    public String showUpdateForm(Model model, @RequestParam Long id) {
+    @GetMapping("/update/{id}")
+    public String showUpdateForm(Model model, @PathVariable  Long id) {
         StudentDetail studentDetail = service.getStudentDetailById(id);
         model.addAttribute("studentDetail", studentDetail);
         return "updateStudents";
@@ -93,11 +95,15 @@ public class StudentController {
         return "redirect:/student/list"; // 更新後のリダイレクト先
     }
 
-    @GetMapping("/student/detail")
-    public String showStudentDetail(@RequestParam Long id, Model model) {
-        StudentDetail studentDetail = service.getStudentDetailById(id);
+    @GetMapping("/student/detail/{studentName}")
+    public String getStudentDetail(@PathVariable String studentName, Model model) {
+        // サービスを使ってデータを取得
+        StudentDetail studentDetail = service.findByName(studentName);
+        if (studentDetail == null) {
+            return "error/404"; // 該当する名前がない場合、404エラーページを返す
+        }
         model.addAttribute("studentDetail", studentDetail);
-        return "studentDetail"; // studentDetail.htmlを返す
+        return "studentDetail"; // studentDetail.html というテンプレートを表示
     }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
