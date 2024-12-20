@@ -24,22 +24,21 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="studentDetail : ${studentList}">
-        <td th:text="${studentDetail?.student?.id}">ID</td>
+    <tr th:each="studentDetail : ${studentList}" th:if="${studentDetail?.student != null}">
+        <td th:text="${studentDetail.student.id}">ID</td>
         <td>
-            <a th:if="${studentDetail?.student != null}"
-               th:href="@{/student/detail/{studentName}(studentName=${studentDetail.student.studentName})}"
+            <a th:href="@{/student/detail/{id}(id=${studentDetail.student.id})}"
                th:text="${studentDetail.student.studentName}">
                 名前
             </a>
         </td>
-        <td th:text="${studentDetail?.student?.furigana}">カナ名</td>
-        <td th:text="${studentDetail?.student?.nickname}">ニックネーム</td>
-        <td th:text="${studentDetail?.student?.email}">メールアドレス</td>
-        <td th:text="${studentDetail?.student?.region}">地域</td>
-        <td th:text="${studentDetail?.student?.age}">年齢</td>
-        <td th:text="${studentDetail?.student?.gender}">性別</td>
-        <td th:text="${studentDetail?.student?.remark}">備考</td>
+        <td th:text="${studentDetail.student.furigana}">カナ名</td>
+        <td th:text="${studentDetail.student.nickname}">ニックネーム</td>
+        <td th:text="${studentDetail.student.email}">メールアドレス</td>
+        <td th:text="${studentDetail.student.region}">地域</td>
+        <td th:text="${studentDetail.student.age}">年齢</td>
+        <td th:text="${studentDetail.student.gender}">性別</td>
+        <td th:text="${studentDetail.student.remark}">備考</td>
     </tr>
     </tbody>
     <!--このtbodyのtr内thでは、studentDetailクラスにあるstudentクラスのid等を参照している。

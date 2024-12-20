@@ -201,8 +201,23 @@ public interface StudentRepository{
 """)
     void insertStudentsCourses(StudentsCourses studentsCourses);
 
-    @Select("SELECT * FROM students WHERE name = #{studentName}")
-    StudentDetail findByName(@Param("studentName") String studentName);
+    @Select("""
+    SELECT
+        id,
+        name AS studentName,
+        furigana,
+        nickname AS nickName,
+        email,
+        region,
+        age,
+        gender,
+        remark
+    FROM
+        students
+    WHERE
+        id = #{id}
+""")
+    StudentDetail findStudentDetailById(@Param("id") Long id);
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

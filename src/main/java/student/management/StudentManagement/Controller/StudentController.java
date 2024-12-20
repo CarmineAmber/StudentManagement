@@ -92,18 +92,17 @@ public class StudentController {
     public String updateStudent(@ModelAttribute StudentDetail studentDetail) {
         // サービスを呼び出してデータを更新
         service.updateStudent(studentDetail);
-        return "redirect:/student/list"; // 更新後のリダイレクト先
+        return "redirect:/studentList";
     }
 
-    @GetMapping("/student/detail/{studentName}")
-    public String getStudentDetail(@PathVariable String studentName, Model model) {
-        // サービスを使ってデータを取得
-        StudentDetail studentDetail = service.findByName(studentName);
+    @GetMapping("/student/detail/{id}")
+    public String getStudentDetail(@PathVariable Long id, Model model) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
         if (studentDetail == null) {
-            return "error/404"; // 該当する名前がない場合、404エラーページを返す
+            return "error/404"; // 学生が見つからない場合、404エラーページを表示
         }
         model.addAttribute("studentDetail", studentDetail);
-        return "studentDetail"; // studentDetail.html というテンプレートを表示
+        return "studentDetail"; // 詳細を表示するビュー
     }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
