@@ -14,6 +14,7 @@ import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -81,15 +82,25 @@ public class StudentController {
         return "redirect:/studentList";
     }
 
-    @GetMapping("/update/{id}")
-    public String showUpdateForm(Model model, @PathVariable  Long id) {
+    @GetMapping("/student/{id}")
+    public String getStudent(Model model, @PathVariable Long id) {
         StudentDetail studentDetail = service.getStudentDetailById(id);
+        if (studentDetail.getStudentsCourses() == null) {
+            studentDetail.setStudentsCourses(new ArrayList<>()); // Ensure it's not null
+        }
         model.addAttribute("studentDetail", studentDetail);
         return "updateStudents";
     }
+    /*スペルミスに注意（updateStudentではない）*/
 
-    @PostMapping("/update")
-    public String updateStudent(@ModelAttribute StudentDetail studentDetail) {
+    @PostMapping("/student/{id}")
+    public String updateStudent(@ModelAttribute StudentDetail studentDetail,BindingResult result) {
+        if ( result.hasErrors() ) if (result.hasErrors()) {
+            result.getAllErrors().forEach(error -> {
+                System.out.println("Error: " + error.getDefaultMessage());
+            });
+            return "registerStudents"; // フォームに戻る
+        }
         // サービスを呼び出してデータを更新
         service.updateStudent(studentDetail);
         return "redirect:/studentList";

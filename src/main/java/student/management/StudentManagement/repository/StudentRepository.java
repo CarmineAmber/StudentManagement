@@ -14,6 +14,19 @@ import java.util.List;
 @Mapper
 public interface StudentRepository{
 
+    @Select("SELECT * FROM students")
+    List<Student> search();
+
+    @Select("SELECT * FROM students WHERE id = #{id}")
+    Student searchStudent(Long id);
+
+    /* 全てのコースを取得 */
+    @Select("SELECT * FROM students_courses")
+    List<StudentsCourses> searchAllCoursesList();
+
+    @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
+    List<StudentsCourses> searchAllCourses(Long studentId);
+
     /* 全件検索を行う。 */
     @Select("""
                 SELECT
@@ -31,10 +44,6 @@ public interface StudentRepository{
                     students
             """)
     List<Student> searchStudents();
-
-    /* 全てのコースを取得 */
-    @Select("SELECT * FROM students_courses")
-    List<StudentsCourses> searchAllCourses();
 
     /* 受講生とコース情報を結合して取得 */
     @Select("""
@@ -169,30 +178,12 @@ public interface StudentRepository{
 """)
     List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
 
-
-    @Update("""
-    UPDATE students
-    SET
-        name = #{studentName},
-        furigana = #{furigana},
-        nickname = #{nickName},
-        email = #{email},
-        region = #{region},
-        age = #{age},
-        gender = #{gender},
-        remark = #{remark}
-    WHERE id = #{id}
-""")
+    @Update("UPDATE students SET name = #{studentName}, furigana = #{furigana}, " +
+            "nickname = #{nickname}, email = #{email},  region = #{region}, age = #{age}, " +
+            "gender = #{gender}, remark = #{remark}, isdeleted = #{isDeleted} WHERE id = #{id}")
     void updateStudent(Student student);
 
-    @Update("""
-    UPDATE students_courses
-    SET
-        course_name = #{courseName},
-        start_date = #{startDate},
-        end_date = #{endDate}
-    WHERE id = #{id}
-""")
+    @Update("UPDATE students_courses SET course_name = #{courseName} WHERE id = #{id}")
     void updateStudentsCourses(StudentsCourses studentsCourses);
 
     @Insert("""
