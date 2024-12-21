@@ -1,5 +1,6 @@
 package student.management.StudentManagement.Controller;
 
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,10 +10,10 @@ import student.management.StudentManagement.Controller.converter.StudentConverte
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
 import student.management.StudentManagement.domain.StudentDetail;
+import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -73,17 +74,17 @@ public class StudentController {
 
     @PostMapping("/registerStudent")
     public String registerStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result) {
-        if (result.hasErrors()) {
+        if ( result.hasErrors() ) {
             return "registerStudents";  // 再度フォームを表示
         }
         service.registerStudent(studentDetail);
         return "redirect:/studentList";
     }
 
-    @GetMapping("/update")
-    public String showUpdateStudentForm(Model model) {
-        // StudentDetail オブジェクトを作成してモデルに追加する
-        model.addAttribute("studentDetail", new StudentDetail());
+    @GetMapping("/update/{id}")
+    public String showUpdateForm(Model model, @PathVariable  Long id) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
+        model.addAttribute("studentDetail", studentDetail);
         return "updateStudents";
     }
 
@@ -91,7 +92,17 @@ public class StudentController {
     public String updateStudent(@ModelAttribute StudentDetail studentDetail) {
         // サービスを呼び出してデータを更新
         service.updateStudent(studentDetail);
-        return "redirect:/student/list"; // 更新後のリダイレクト先
+        return "redirect:/studentList";
+    }
+
+    @GetMapping("/student/detail/{id}")
+    public String getStudentDetail(@PathVariable Long id, Model model) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
+        if (studentDetail == null) {
+            return "error/404"; // 学生が見つからない場合、404エラーページを表示
+        }
+        model.addAttribute("studentDetail", studentDetail);
+        return "studentDetail"; // 詳細を表示するビュー
     }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
@@ -107,3 +118,5 @@ public class StudentController {
  * （例えば、ExcelBasicと入れると[{"studentId":5,"studentName":"野島葵","furigana":"ノジマアオイ","nickName":
  * "TEST05","email":"TEST05","region":"愛媛","age":35,"gender":"女性","courlBasic","startDate":
  * "2024-11-09T15:00:00.000+00:00","endDate":"2025-11-08T15:00:00.000+00:00"}]と出てくる）*/
+
+/*GPTを使う場合、StudentServiceで動作しない可能性がある場合はrepositoryに変更するとうまくいくようだ。*/

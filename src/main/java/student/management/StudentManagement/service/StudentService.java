@@ -72,7 +72,7 @@ public class StudentService {
             // InputStreamの読み込み
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-            /*UTF_8を設定しないと文字化けする。*/
+            /*ここでUTF_8を設定しないと文字化けする。*/
             StringBuilder response = new StringBuilder();
             String line;
 
@@ -101,7 +101,7 @@ public class StudentService {
         repository.registerStudent(studentDetail.getStudent());
         studentDetail.getStudent().getId();
         /*このWebアプリでは、サービスにトランザクション処理を記載している。
-         * サービスにトランザクション処理を記載することを推奨している。*/
+         * サービス層に記載することを推奨している。*/
         /*TODO：コース情報登録も行う。*/
         for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
             studentsCourses.setStudentId(studentDetail.getStudent().getId());
@@ -117,6 +117,16 @@ public class StudentService {
 
     public List<StudentsCourses> findCoursesByStudentId(Long studentId) {
         return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
+    }
+
+    public StudentDetail getStudentDetailById(Long id) {
+        // リポジトリから受講生情報を取得
+        Student student = repository.findStudentById(id);
+        List<StudentsCourses> courses = repository.findCoursesByStudentId(id);
+        StudentDetail detail = new StudentDetail();
+        detail.setStudent(student);
+        detail.setStudentsCourses(courses);
+        return detail;
     }
 
     @Transactional
