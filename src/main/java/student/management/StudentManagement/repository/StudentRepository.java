@@ -178,13 +178,23 @@ public interface StudentRepository{
 """)
     List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
 
-    @Update("UPDATE students SET name = #{studentName}, furigana = #{furigana}, " +
-            "nickname = #{nickname}, email = #{email},  region = #{region}, age = #{age}, " +
-            "gender = #{gender}, remark = #{remark}, isdeleted = #{isDeleted} WHERE id = #{id}")
-    void updateStudent(Student student);
+    @Update("""
+    UPDATE students
+    SET name = #{studentName},
+        furigana = #{furigana},
+        nickname = #{nickname},
+        email = #{email},
+        region = #{region},
+        age = #{age},
+        gender = #{gender},
+        remark = #{remark},
+        isdeleted = COALESCE(#{isDeleted}, false)
+    WHERE id = #{id}
+""")
+    int updateStudent(Student student);
 
     @Update("UPDATE students_courses SET course_name = #{courseName} WHERE id = #{id}")
-    void updateStudentsCourses(StudentsCourses studentsCourses);
+    int updateStudentsCourses(StudentsCourses studentsCourses);
 
     @Insert("""
     INSERT INTO students_courses (student_id, course_name, start_date, end_date)
@@ -202,7 +212,8 @@ public interface StudentRepository{
         region,
         age,
         gender,
-        remark
+        remark,
+        isdeleted
     FROM
         students
     WHERE
