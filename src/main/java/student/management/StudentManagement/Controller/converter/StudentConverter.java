@@ -11,15 +11,14 @@ import java.util.stream.Collectors;
 
 @Component
 public class StudentConverter {
-    public List<StudentDetail> convertStudentDetails
-            (List<Student> students, List<StudentsCourses> studentsCourses) {
+    public List<StudentDetail> convertStudentDetails(List<Student> students, List<StudentsCourses> studentsCourses) {
         List<StudentDetail> studentDetails = new ArrayList<>();
         students.forEach(student -> {
             StudentDetail studentDetail = new StudentDetail();
             studentDetail.setStudent(student);
 
             List<StudentsCourses> convertStudentsCourses = studentsCourses.stream()
-                    .filter(studentCourse -> student.getId().equals(studentCourse.getStudentId()))
+                    .filter(studentCourse -> String.valueOf(student.getId()).equals(studentCourse.getStudentId()))  // 型を文字列に変換して比較
                     .collect(Collectors.toList());
 
             studentDetail.setStudentsCourses(convertStudentsCourses);

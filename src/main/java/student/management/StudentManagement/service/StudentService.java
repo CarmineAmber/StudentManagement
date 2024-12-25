@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 
 @Service
 public class StudentService {
@@ -40,8 +39,20 @@ public class StudentService {
         return repository.searchStudents();
     }
 
+    public StudentDetail searchStudent(Long id){
+        Student student = repository.searchStudent(id);
+
+        // student.getId() を Long 型に変換
+        List<StudentsCourses> studentsCourses = repository.searchAllCourses(Long.valueOf(student.getId()));
+
+        StudentDetail studentDetail = new StudentDetail();
+        studentDetail.setStudent(student);
+        studentDetail.setStudentsCourses(studentsCourses);
+        return studentDetail;
+    }
+
     public List<StudentsCourses> searchAllCourses() {
-        return repository.searchAllCourses();
+        return repository.searchAllCoursesList();
     }
 
     public List<StudentsWithCourses> searchStudentsWithCourses() {
@@ -72,7 +83,7 @@ public class StudentService {
             // InputStreamの読み込み
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-            /*UTF_8を設定しないと文字化けする。*/
+            /*ここでUTF_8を設定しないと文字化けする。*/
             StringBuilder response = new StringBuilder();
             String line;
 
@@ -101,12 +112,12 @@ public class StudentService {
         repository.registerStudent(studentDetail.getStudent());
         studentDetail.getStudent().getId();
         /*このWebアプリでは、サービスにトランザクション処理を記載している。
-         * サービスにトランザクション処理を記載することを推奨している。*/
+         * サービス層に記載することを推奨している。*/
         /*TODO：コース情報登録も行う。*/
         for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
             studentsCourses.setStudentId(studentDetail.getStudent().getId());
-            studentsCourses.setStartDate(LocalDateTime.now());
-            studentsCourses.setEndDate(LocalDateTime.now().plusYears(1));
+            studentsCourses.setStartDate(LocalDate.now());
+            studentsCourses.setEndDate(LocalDate.now().plusYears(1));
             repository.registerStudentsCourses(studentsCourses);
         }
     }
@@ -119,16 +130,36 @@ public class StudentService {
         return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
     }
 
+    public StudentDetail getStudentDetailById(Long id) {
+        Student student = repository.findStudentById(id);
+        if (student == null) {
+            throw new IllegalArgumentException("Student not found with id: " + id);
+        }
+        List<StudentsCourses> courses = repository.findCoursesByStudentId(id);
+        StudentDetail detail = new StudentDetail();
+        detail.setStudent(student);
+        detail.setStudentsCourses(courses);
+        return detail;
+    }
+
     @Transactional
     public void updateStudent(StudentDetail studentDetail) {
+        if (studentDetail.getStudent() == null) {
+            throw new IllegalArgumentException("Student object cannot be null.");
+        }
+
+        // 学生情報の更新
         repository.updateStudent(studentDetail.getStudent());
+
         for (StudentsCourses course : studentDetail.getStudentsCourses()) {
-            if ( Objects.equals(course.getId(), null) ) {
-                course.setStudentId(studentDetail.getStudent().getId());
-                course.setStartDate(LocalDateTime.now());
-                course.setEndDate(LocalDateTime.now().plusYears(1));
-                repository.insertStudentsCourses(course);
+            if (course.getId() == null) {
+                // 新規登録の場合
+                course.setStudentId(studentDetail.getStudent().getId()); // student_idを設定
+                course.setStartDate(LocalDate.now());
+                course.setEndDate(LocalDate.now().plusYears(1));
+                repository.registerStudentsCourses(course);
             } else {
+                // 既存データの更新の場合
                 repository.updateStudentsCourses(course);
             }
         }
