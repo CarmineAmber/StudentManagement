@@ -1,6 +1,8 @@
 package student.management.StudentManagement.repository;
 
 import org.apache.ibatis.annotations.*;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -27,23 +29,10 @@ public interface StudentRepository{
     @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourses> searchAllCourses(Long studentId);
 
-    /* 全件検索を行う。 */
-    @Select("""
-                SELECT
-                    id,
-                    name AS studentName,
-                    furigana,
-                    nickname AS nickName,
-                    email,
-                    region,
-                    age,
-                    gender,
-                    remark,
-                    isdeleted AS isDeleted
-                FROM
-                    students
-            """)
+    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, region, age, gender, remark, isdeleted AS isDeleted " +
+            "FROM students WHERE isdeleted = false")
     List<Student> searchStudents();
+    /*WHERE isdeleted = falseがないとリストに非表示にならない*/
 
     /* 受講生とコース情報を結合して取得 */
     @Select("""
@@ -148,34 +137,12 @@ public interface StudentRepository{
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudentsCourses(StudentsCourses studentsCourses);
 
-    @Select("""
-    SELECT
-        id,
-        name AS studentName,
-        furigana,
-        nickname AS nickName,
-        email,
-        region,
-        age,
-        gender,
-        remark
-    FROM
-        students
-    WHERE
-        id = #{id}
-""")
+    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
+            "region, age, gender, remark FROM students WHERE id = #{id}")
     Student findStudentById(@Param("id") Long id);
 
-    @Select("""
-    SELECT
-        course_name AS courseName,
-        start_date AS startDate,
-        end_date AS endDate
-    FROM
-        students_courses
-    WHERE
-        student_id = #{studentId}
-""")
+    @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
+            "FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
 
     @Update("""
@@ -220,6 +187,13 @@ public interface StudentRepository{
         id = #{id}
 """)
     StudentDetail findStudentDetailById(@Param("id") Long id);
+
+    @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")
+    void updateIsDeleted(@Param("id") Long id, @Param("isDeleted") boolean isDeleted);
+
+    @Modifying
+    @Query("SELECT s FROM Student s WHERE s.isDeleted = false")
+    List<Student> findActiveStudents();
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

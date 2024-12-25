@@ -20,8 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
+/* Lombok を使用している場合、@Slf4j アノテーションを追加するだけでログを生成可能である。*/
 public class StudentService {
 
     private final StudentRepository repository;
@@ -140,6 +143,17 @@ public class StudentService {
         detail.setStudent(student);
         detail.setStudentsCourses(courses);
         return detail;
+    }
+
+    public void markAsDeleted(Long studentId) {
+        log.debug("Marking student as deleted with ID: {}", studentId);
+        repository.updateIsDeleted(studentId, true);
+    }
+    /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
+    * 使うことでログを表示できる。*/
+
+    public List<Student> getActiveStudents() {
+        return repository.findActiveStudents();
     }
 
     @Transactional

@@ -34,7 +34,6 @@ public class StudentController {
     public String getStudentList(Model model) {
         List<Student> students = service.searchStudentList();
         List<StudentsCourses> studentsCourses = service.searchAllCourses();
-
         model.addAttribute("studentList", converter.convertStudentDetails(students, studentsCourses));
         return "studentList";
     }
@@ -94,17 +93,16 @@ public class StudentController {
     /*スペルミスに注意（updateStudentではない）*/
 
     @PostMapping("/student/{id}")
-    public String updateStudent(@ModelAttribute StudentDetail studentDetail,BindingResult result) {
-        if ( result.hasErrors() ) if (result.hasErrors()) {
-            result.getAllErrors().forEach(error -> {
-                System.out.println("Error: " + error.getDefaultMessage());
-            });
-            return "registerStudents"; // フォームに戻る
+    public String updateStudent(@ModelAttribute StudentDetail studentDetail) {
+        Student student = studentDetail.getStudent();
+        if (student.getIsDeleted() != null && student.getIsDeleted()) {
+            service.markAsDeleted(student.getId().longValue()); // 型変換を追加
+        } else {
+            service.updateStudent(studentDetail);
         }
-        // サービスを呼び出してデータを更新
-        service.updateStudent(studentDetail);
         return "redirect:/studentList";
     }
+    /*/{id}としなければ個別のページを表示できない。*/
 
     @GetMapping("/student/detail/{id}")
     public String getStudentDetail(@PathVariable Long id, Model model) {
