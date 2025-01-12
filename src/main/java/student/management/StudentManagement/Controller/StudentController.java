@@ -2,6 +2,7 @@ package student.management.StudentManagement.Controller;
 
 import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Controller
+@RestController
 public class StudentController {
 
     private StudentService service;
@@ -30,12 +31,25 @@ public class StudentController {
         this.converter = converter;
     }
 
+    /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
+    インスタンス化を１回で行える。また、クラス内のnew演算子を消すことができる。つまりこのクラスでは
+    @Autowiredを使うことで全てのpublic変数をインスタンス化させ、newをいちいち記述する必要が
+    ないようにしている。つまり、このクラスでは@GetMappingのpublic変数にreturn service.を
+    記載するだけでインスタンスとして成立させている。尚、this.service = service;
+    this.converter = converterはStudentServiceとStudentConverterをこのクラスに紐づけている。*/
+
     @GetMapping("/studentList")
-    public String getStudentList(Model model) {
+    public List<StudentDetail> getStudentList() {
         List<Student> students = service.searchStudentList();
         List<StudentsCourses> studentsCourses = service.searchAllCourses();
-        model.addAttribute("studentList", converter.convertStudentDetails(students, studentsCourses));
-        return "studentList";
+
+        System.out.println("Students: " + students);
+        System.out.println("StudentsCourses: " + studentsCourses);
+
+        List<StudentDetail> result = converter.convertStudentDetails(students, studentsCourses);
+        System.out.println("Result: " + result);
+
+        return converter.convertStudentDetails(students, studentsCourses);
     }
 
     @GetMapping("/allCourses")
@@ -80,12 +94,19 @@ public class StudentController {
         service.registerStudent(studentDetail);
         return "redirect:/studentList";
     }
+    /*@ModelAttributeは一般的にHTTPのGETメソッドで使用されるが、POSTメソッドでも使用できる。
+    * このアノテーションは主にフォームデータの送信に使用される。これを使うことによって個別の
+    * リクエストパラメータを自動でセットが可能になり、コードが読みやすくなる。この@ModelAttributeで
+    * 指定されたオブジェクトは自動的にビューに渡され、画面表示にオブジェクトデータ（テキストボックス等）を
+    * 簡単に利用できる。また、BindingResultを利用してエラーを簡単に処理できる。*/
 
     @GetMapping("/student/{id}")
     public String getStudent(Model model, @PathVariable Long id) {
         StudentDetail studentDetail = service.getStudentDetailById(id);
         if (studentDetail.getStudentsCourses() == null) {
-            studentDetail.setStudentsCourses(new ArrayList<>()); // Ensure it's not null
+            studentDetail.setStudentsCourses(new ArrayList<>());
+            /*コース名が未入力の場合、空のArrayListを使うことで本来は表示されない
+            * コース名のラベルとテキストボックスを表示させている。*/
         }
         model.addAttribute("studentDetail", studentDetail);
         return "updateStudents";
@@ -93,16 +114,23 @@ public class StudentController {
     /*スペルミスに注意（updateStudentではない）*/
 
     @PostMapping("/student/{id}")
-    public String updateStudent(@ModelAttribute StudentDetail studentDetail) {
+    public ResponseEntity<String> updateStudent(@RequestBody StudentDetail studentDetail) {
+        /*更新が無事に行えたか否かをResponseEntityで返す*/
         Student student = studentDetail.getStudent();
         if (student.getIsDeleted() != null && student.getIsDeleted()) {
             service.markAsDeleted(student.getId().longValue()); // 型変換を追加
         } else {
             service.updateStudent(studentDetail);
         }
-        return "redirect:/studentList";
+        return ResponseEntity.ok("更新処理が成功しました。");
     }
-    /*/{id}としなければ個別のページを表示できない。*/
+
+    /*/{id}としなければ個別のページを表示できない。例えばid３の受講生を表示する場合は
+    * /student/3と入力する*/
+    /*このコードは受講生オブジェクトを取得し、削除フラグisDeleted（キャンセルのチェックボックス）が
+    *trueであるか確認する。trueの場合、受講生を論理削除（非表示にする、つまりキャンセルのチェックボックスを
+    * オンにする）するgetIsDeleted処理を行う。その際、longValue()を使用してIntegerをLongに変更している。
+    * isDeletedがfalseかnullの場合、受講生情報を更新する。*/
 
     @GetMapping("/student/detail/{id}")
     public String getStudentDetail(@PathVariable Long id, Model model) {
@@ -113,13 +141,17 @@ public class StudentController {
         model.addAttribute("studentDetail", studentDetail);
         return "studentDetail"; // 詳細を表示するビュー
     }
-}
-    /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
-    インスタンス化を１回で行える。また、クラス内のnew演算子を消すことができる。つまりこのクラスでは
-    @Autowiredを使うことで全てのpublic変数をインスタンス化させ、newをいちいち記述する必要が
-    ないようにしている。つまり、このクラスでは@GetMappingのpublic変数にreturn service.を
-    記載するだけでインスタンスとして成立させている。*/
 
+    @PostMapping("/updateCourse")
+    public ResponseEntity<String> updateCourse(@RequestBody StudentsCourses studentsCourses) {
+        int rowsAffected = service.updateStudentsCourses(studentsCourses);
+        if (rowsAffected > 0) {
+            return ResponseEntity.ok("コース名の更新に成功しました。");
+        }
+        return ResponseEntity.status(400).body("更新処理が失敗しました。");
+    }
+
+}
 /*@RequestParamとは、ブラウザからのリクエストの値（パラメータ）を取得することのできるアノテーション。
  * Spring bootにおいて基礎的なアノテーションの１つ。このコードでは、@RequestParamにStudentWithCoursesの
  * courseNameを文字列として取得し、curl -X GET "http://localhost:8080/students/byCourse?courseName=JAVA"で
@@ -129,3 +161,13 @@ public class StudentController {
  * "2024-11-09T15:00:00.000+00:00","endDate":"2025-11-08T15:00:00.000+00:00"}]と出てくる）*/
 
 /*GPTを使う場合、StudentServiceで動作しない可能性がある場合はrepositoryに変更するとうまくいくようだ。*/
+
+/*GET(@GetMapping),POST(@PostMapping),PUT(@PutMapping),DELETE(@DeleteMapping)はHTTPリクエストであり、
+*アドレス可能性（URL)において何らかのアクションを起こすためのメソッド。例えばユーザー登録の場合はGETならばユーザーの
+*取得、POSTならユーザーの登録を行うということ。*/
+/*RESTの原則：ステートレスはログイン情報を保持しないが、ステートフルはログイン情報を保持する。
+SNS等はこの２つを使い分けて機能している。基本的に現場では状況がアプリの内容によって異なるため
+その都度柔軟に考える必要がある。*/
+/*URIは階層的な構造をもたせる必要がある。そうでないと可読性が低下したりURIが複雑になる。
+*例えば、特定のユーザー情報を取得する際にはIDをURIのパラメータとして指定する必要がある。
+*chatGPTが@GetMappingにおいて("/student/{id}")と指定してきたのもこのため。*/

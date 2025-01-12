@@ -18,12 +18,31 @@ public class StudentConverter {
             studentDetail.setStudent(student);
 
             List<StudentsCourses> convertStudentsCourses = studentsCourses.stream()
-                    .filter(studentCourse -> String.valueOf(student.getId()).equals(studentCourse.getStudentId()))  // 型を文字列に変換して比較
+                    .filter(studentCourse -> studentCourse.getStudentId() != null) // NULLを除外
+                    .filter(studentCourse -> student.getId().equals(studentCourse.getStudentId()))
                     .collect(Collectors.toList());
+            /*SQLにコース登録の失敗で積み重なったNullが表示されていたため、サーバーエラーが発生していた。
+            *.filter(studentCourse -> studentCourse.getStudentId() != null)を使うことで
+            *NULLのデータを除外できる*/
 
             studentDetail.setStudentsCourses(convertStudentsCourses);
             studentDetails.add(studentDetail);
         });
+
+        // デバッグ用ログ
+        studentDetails.forEach(detail -> {
+            System.out.println("Student: " + detail.getStudent().getId());
+            detail.getStudentsCourses().forEach(course ->
+                    System.out.println("Course: " + course.getCourseName()));
+        });
+
         return studentDetails;
     }
 }
+
+/*このクラスの役割は、特定のデータ型やオブジェクトを別の型やフォーマットに変換すること。
+ *例：文字列を数値に変換する、データベースエンティティ（管理すべき情報）とデータ転送オブジェクトを変換する。
+ *特にデータベースエンティティとデータ転送オブジェクトを分離することでレスポンスを分離可能である。
+ *また、データベースや外部システム（API、XML、JSONなど）から受け取ったデータを、
+ *アプリケーションの内部モデルに変換したり、その逆を行うことが可能である。
+ *尚、Spring FrameworkではConverterを使うことで特定の型変換ロジックをカプセル化する。*/

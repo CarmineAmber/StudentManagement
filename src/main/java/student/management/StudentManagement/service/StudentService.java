@@ -28,6 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 public class StudentService {
 
     private final StudentRepository repository;
+    /*finalを宣言すると、そのクラスを継承したクラスにおいてそのメソッドを
+    * オーバーライドできなくなる。コンストラクタの宣言にfinalを使用することはない*/
 
     @Autowired
 
@@ -40,6 +42,10 @@ public class StudentService {
 
     public List<Student> searchStudentList() {
         return repository.searchStudents();
+    }
+
+    public int updateStudentsCourses(StudentsCourses studentsCourses) {
+        return repository.updateStudentsCourses(studentsCourses);
     }
 
     public StudentDetail searchStudent(Long id) {
@@ -115,13 +121,13 @@ public class StudentService {
         repository.registerStudent(studentDetail.getStudent());
         studentDetail.getStudent().getId();
         /*このWebアプリでは、サービスにトランザクション処理を記載している。
-         * サービス層に記載することを推奨している。*/
-        /*TODO：コース情報登録も行う。*/
+         *基本的にトランザクション処理は、サービス層に記載することを推奨している。*/
         for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
             studentsCourses.setStudentId(studentDetail.getStudent().getId());
             studentsCourses.setStartDate(LocalDate.now());
             studentsCourses.setEndDate(LocalDate.now().plusYears(1));
             repository.registerStudentsCourses(studentsCourses);
+            /*yearsToAddは入力した数値分年数を増やす。*/
         }
     }
 
@@ -150,7 +156,7 @@ public class StudentService {
         repository.updateIsDeleted(studentId, true);
     }
     /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
-    * 使うことでログを表示できる。*/
+    * 使うことでログを表示できる。主にデバッグで使用する*/
 
     public List<Student> getActiveStudents() {
         return repository.findActiveStudents();
@@ -172,6 +178,10 @@ public class StudentService {
                     + studentDetail.getStudent().getId() + " not found.");
         }
     }
+    /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
+    * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
+    * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を
+    * 行わない場合、読み取り専用モードにも設定できる*/
 }
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの

@@ -14,7 +14,7 @@ import java.util.List;
  * 全件検索や単一条件での検索が行えるクラス。*/
 
 @Mapper
-public interface StudentRepository{
+public interface StudentRepository {
 
     @Select("SELECT * FROM students")
     List<Student> search();
@@ -29,7 +29,8 @@ public interface StudentRepository{
     @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourses> searchAllCourses(Long studentId);
 
-    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, region, age, gender, remark, isdeleted AS isDeleted " +
+    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, " +
+            "email, region, age, gender, remark, isdeleted AS isDeleted " +
             "FROM students WHERE isdeleted = false")
     List<Student> searchStudents();
     /*WHERE isdeleted = falseがないとリストに非表示にならない*/
@@ -126,9 +127,11 @@ public interface StudentRepository{
     List<StudentsCourses> findAll();
 
     @Insert("""
-    INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark, isDeleted)
-    VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark}, false)
-""")
+                INSERT INTO students (name, furigana, nickname, email,
+                region, age, gender, remark, isDeleted)
+                VALUES (#{studentName}, #{furigana}, #{nickname}, #{email},
+                #{region}, #{age}, #{gender}, #{remark}, false)
+            """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudent(Student student);
 
@@ -146,46 +149,49 @@ public interface StudentRepository{
     List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
 
     @Update("""
-    UPDATE students
-    SET name = #{studentName},
-        furigana = #{furigana},
-        nickname = #{nickname},
-        email = #{email},
-        region = #{region},
-        age = #{age},
-        gender = #{gender},
-        remark = #{remark},
-        isdeleted = COALESCE(#{isDeleted}, false)
-    WHERE id = #{id}
-""")
+                UPDATE students
+                SET
+                    name = #{studentName},
+                    furigana = #{furigana},
+                    nickname = #{nickname},
+                    email = #{email},
+                    region = #{region},
+                    age = #{age},
+                    gender = #{gender},
+                    remark = #{remark},
+                    isdeleted = COALESCE(#{isDeleted}, false)
+                WHERE
+                    id = #{id}
+            """)
+    /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
     int updateStudent(Student student);
 
     @Update("UPDATE students_courses SET course_name = #{courseName} WHERE id = #{id}")
     int updateStudentsCourses(StudentsCourses studentsCourses);
 
     @Insert("""
-    INSERT INTO students_courses (student_id, course_name, start_date, end_date)
-    VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
-""")
+                INSERT INTO students_courses (student_id, course_name, start_date, end_date)
+                VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
+            """)
     void insertStudentsCourses(StudentsCourses studentsCourses);
 
     @Select("""
-    SELECT
-        id,
-        name AS studentName,
-        furigana,
-        nickname AS nickName,
-        email,
-        region,
-        age,
-        gender,
-        remark,
-        isdeleted
-    FROM
-        students
-    WHERE
-        id = #{id}
-""")
+                SELECT
+                    id,
+                    name AS studentName,
+                    furigana,
+                    nickname AS nickName,
+                    email,
+                    region,
+                    age,
+                    gender,
+                    remark,
+                    isdeleted
+                FROM
+                    students
+                WHERE
+                    id = #{id}
+            """)
     StudentDetail findStudentDetailById(@Param("id") Long id);
 
     @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")

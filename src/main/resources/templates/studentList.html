@@ -21,6 +21,10 @@
         <th>年齢</th>
         <th>性別</th>
         <th>備考</th>
+        <th>コース名</th>
+        <th>開始日</th>
+        <th>終了日</th>
+        <th>キャンセル</th>
     </tr>
     </thead>
     <tbody>
@@ -39,14 +43,24 @@
         <td th:text="${studentDetail.student.age}">年齢</td>
         <td th:text="${studentDetail.student.gender}">性別</td>
         <td th:text="${studentDetail.student.remark}">備考</td>
+        <td>
+            <input type="checkbox" th:checked="${studentDetail.student.isDeleted}" />
+        </td>
+        <!--チェックボックスはth:checked-->
     </tr>
     </tbody>
-
-    <!--このtbodyのtr内thでは、studentDetailクラスにあるstudentクラスのid等を参照している。
-    参照変数がstudentクラスと全く同じでないと、リストが機能しないことに留意すること-->
-    <!--th:eachはリストやコレクションのループ処理を行う。このリストでは、studentDetail内の
-    studentListの人数分ループ処理を行い、画面表示をできるようにしている-->
-    <!--tr:textはテキストを動的に置き換える-->
 </table>
 </body>
 </html>
+<!--このtrのヘッドに付いているコードは、studentListに含まれる各要素をループ処理するための
+Thymeleafテンプレートエンジンを使用した構文。これでstudentListのリスト要素を取り出し、
+studentDetailという変数に代入する。各ループのたびに１つのstudentDetailオブジェクトが
+処理される。if構文はstudentDetailオブジェクトが存在し、その中のstudentプロパティがnull
+（何もない状態）ではないことを確認し、その上で削除フラグが立っていないものが確認できたもの
+のみを表示する。studentDetail?の?は、Nullセーフ演算子であり、studentDetailが
+nullの場合でもエラーにならずに処理を進めることを可能にしている-->
+<!--このtbodyのtr内thでは、studentDetailクラスにあるstudentクラスのid等を参照している。
+参照変数がstudentクラスと全く同じでないと、リストが機能しないことに留意すること-->
+<!--th:eachはリストやコレクションのループ処理を行う。このリストでは、studentDetail内の
+studentListの人数分ループ処理を行い、画面表示をできるようにしている-->
+<!--th:textはテキストを動的に置き換える-->
