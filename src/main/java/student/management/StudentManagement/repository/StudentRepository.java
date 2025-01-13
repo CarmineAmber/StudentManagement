@@ -1,8 +1,6 @@
 package student.management.StudentManagement.repository;
 
 import org.apache.ibatis.annotations.*;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -19,7 +17,21 @@ public interface StudentRepository {
     @Select("SELECT * FROM students")
     List<Student> search();
 
-    @Select("SELECT * FROM students WHERE id = #{id}")
+    @Select("""
+    SELECT
+        id AS id,
+        name AS studentName,
+        furigana AS furigana,
+        nickname AS nickname,
+        email AS email,
+        region AS region,
+        age AS age,
+        gender AS gender,
+        remark AS remark,
+        isdeleted AS isDeleted
+    FROM students
+    WHERE id = #{id}
+""")
     Student searchStudent(Long id);
 
     /* 全てのコースを取得 */
@@ -166,7 +178,7 @@ public interface StudentRepository {
     /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
     int updateStudent(Student student);
 
-    @Update("UPDATE students_courses SET course_name = #{courseName} WHERE id = #{id}")
+    @Update("UPDATE students_courses SET course_name = #{courseName}, start_date = #{startDate}, end_date = #{endDate} WHERE id = #{id}")
     int updateStudentsCourses(StudentsCourses studentsCourses);
 
     @Insert("""
@@ -197,9 +209,6 @@ public interface StudentRepository {
     @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")
     void updateIsDeleted(@Param("id") Long id, @Param("isDeleted") boolean isDeleted);
 
-    @Modifying
-    @Query("SELECT s FROM Student s WHERE s.isDeleted = false")
-    List<Student> findActiveStudents();
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

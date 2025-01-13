@@ -1,9 +1,7 @@
 package student.management.StudentManagement.Controller;
 
-import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -11,11 +9,9 @@ import student.management.StudentManagement.Controller.converter.StudentConverte
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
 import student.management.StudentManagement.domain.StudentDetail;
-import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -87,42 +83,34 @@ public class StudentController {
     }
 
     @PostMapping("/registerStudent")
-    public String registerStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result) {
-        if ( result.hasErrors() ) {
-            return "registerStudents";  // 再度フォームを表示
-        }
-        service.registerStudent(studentDetail);
-        return "redirect:/studentList";
+    public ResponseEntity<StudentDetail> registerStudent(@RequestBody StudentDetail studentDetail) {
+        StudentDetail responseStudentDetail = service.registerStudent(studentDetail);
+        return ResponseEntity.ok(responseStudentDetail);
     }
     /*@ModelAttributeは一般的にHTTPのGETメソッドで使用されるが、POSTメソッドでも使用できる。
     * このアノテーションは主にフォームデータの送信に使用される。これを使うことによって個別の
     * リクエストパラメータを自動でセットが可能になり、コードが読みやすくなる。この@ModelAttributeで
     * 指定されたオブジェクトは自動的にビューに渡され、画面表示にオブジェクトデータ（テキストボックス等）を
     * 簡単に利用できる。また、BindingResultを利用してエラーを簡単に処理できる。*/
-
-    @GetMapping("/student/{id}")
-    public String getStudent(Model model, @PathVariable Long id) {
-        StudentDetail studentDetail = service.getStudentDetailById(id);
-        if (studentDetail.getStudentsCourses() == null) {
-            studentDetail.setStudentsCourses(new ArrayList<>());
-            /*コース名が未入力の場合、空のArrayListを使うことで本来は表示されない
-            * コース名のラベルとテキストボックスを表示させている。*/
-        }
-        model.addAttribute("studentDetail", studentDetail);
-        return "updateStudents";
-    }
     /*スペルミスに注意（updateStudentではない）*/
 
+    @GetMapping("/student/{id}")
+    public StudentDetail getStudent(@PathVariable String id){
+        Long studentId = Long.valueOf(id);
+        return service.searchStudent(studentId);
+    }
+
     @PostMapping("/student/{id}")
-    public ResponseEntity<String> updateStudent(@RequestBody StudentDetail studentDetail) {
-        /*更新が無事に行えたか否かをResponseEntityで返す*/
-        Student student = studentDetail.getStudent();
-        if (student.getIsDeleted() != null && student.getIsDeleted()) {
-            service.markAsDeleted(student.getId().longValue()); // 型変換を追加
-        } else {
-            service.updateStudent(studentDetail);
+    public ResponseEntity<String> updateStudentWithCourses(@RequestBody StudentDetail studentDetail) {
+        try {
+            // サービスメソッドでStudentとCoursesをまとめて更新
+            service.updateStudentWithCourses(studentDetail);
+            return ResponseEntity.ok("学生情報とコース情報の更新に成功しました。");
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(400).body("更新処理が失敗しました: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("サーバーエラーが発生しました: " + e.getMessage());
         }
-        return ResponseEntity.ok("更新処理が成功しました。");
     }
 
     /*/{id}としなければ個別のページを表示できない。例えばid３の受講生を表示する場合は

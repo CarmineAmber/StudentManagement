@@ -19,6 +19,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +46,7 @@ public class StudentService {
     }
 
     public int updateStudentsCourses(StudentsCourses studentsCourses) {
+        log.debug("Updating StudentsCourses: {}", studentsCourses);
         return repository.updateStudentsCourses(studentsCourses);
     }
 
@@ -78,57 +80,55 @@ public class StudentService {
 
     public List<Student> fetchStudentsFromApi() {
         try {
-            /*URLの設定*/
             URL url = new URL("http://localhost:8080/studentList");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            /*HttpURLConnectionとは、httpを基にget,post,put,deleteなどのリクエストを
-             * サポートする。このコードでは、下記のcon.setRequestMethod("GET");と
-             * con.setRequestProperty("Accept", "application/json");という
-             * リクエストをサポートしている。*/
             con.setRequestMethod("GET");
             con.setRequestProperty("Accept", "application/json");
-            /*JAVAでAPI通信を使ってJSONを取得するための接続設定。*/
 
-            // InputStreamの読み込み
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-            /*ここでUTF_8を設定しないと文字化けする。*/
             StringBuilder response = new StringBuilder();
             String line;
 
             while ((line = reader.readLine()) != null) {
-                response.append(line.trim());  // 改行やスペースを削除して結合
+                response.append(line.trim());
             }
             reader.close();
 
-            /*JSONのパース（JSON形式の文字列をJAVAオブジェクトに変換する）。ObjectMapperとは、JAVAオブジェクトと
-            JSONのパースを簡単にするためのjacksonパッケージの１つ。*/
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            // JSONをList<Student>にパース
             return objectMapper.readValue(response.toString(), new TypeReference<List<Student>>() {
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to fetch students from API", e);
+            throw new RuntimeException("Unable to fetch students from API.", e);
         }
-        return null;
     }
 
     @Transactional
-    public void registerStudent(StudentDetail studentDetail) {
+    public StudentDetail registerStudent(StudentDetail studentDetail) {
+        // 学生情報を登録
         repository.registerStudent(studentDetail.getStudent());
-        studentDetail.getStudent().getId();
-        /*このWebアプリでは、サービスにトランザクション処理を記載している。
-         *基本的にトランザクション処理は、サービス層に記載することを推奨している。*/
+
+        // データベースで生成されたIDを取得
+        Integer generatedId = studentDetail.getStudent().getId();
+
+        if (generatedId == null) {
+            throw new IllegalStateException("Student ID was not generated after registration.");
+        }
+
+        // 登録するコース情報を設定
         for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
-            studentsCourses.setStudentId(studentDetail.getStudent().getId());
+            studentsCourses.setStudentId(generatedId);
             studentsCourses.setStartDate(LocalDate.now());
             studentsCourses.setEndDate(LocalDate.now().plusYears(1));
             repository.registerStudentsCourses(studentsCourses);
-            /*yearsToAddは入力した数値分年数を増やす。*/
         }
+
+        // studentDetail を返す
+        return studentDetail;
     }
 
     public Student findStudentById(Long id) {
@@ -158,10 +158,6 @@ public class StudentService {
     /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
     * 使うことでログを表示できる。主にデバッグで使用する*/
 
-    public List<Student> getActiveStudents() {
-        return repository.findActiveStudents();
-    }
-
     @Transactional
     public void updateStudent(StudentDetail studentDetail) {
         if (studentDetail.getStudent() == null) {
@@ -176,6 +172,23 @@ public class StudentService {
         if (updatedRows == 0) {
             throw new IllegalStateException("Failed to update student. Student with ID "
                     + studentDetail.getStudent().getId() + " not found.");
+        }
+    }
+
+    @Transactional
+    public void updateStudentWithCourses(StudentDetail studentDetail) {
+        // 学生情報の更新
+        int updatedRows = repository.updateStudent(studentDetail.getStudent());
+        if (updatedRows == 0) {
+            throw new IllegalStateException("学生情報の更新に失敗しました。該当する学生が見つかりません。");
+        }
+
+        // コース情報の更新
+        for (StudentsCourses course : studentDetail.getStudentsCourses()) {
+            int updatedCourseRows = repository.updateStudentsCourses(course);
+            if (updatedCourseRows == 0) {
+                throw new IllegalStateException("コース情報の更新に失敗しました。学生ID: " + course.getStudentId());
+            }
         }
     }
     /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
