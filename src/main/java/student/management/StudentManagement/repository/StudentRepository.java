@@ -8,36 +8,46 @@ import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
 
-/*受講生情報を扱うリポジトリ。
- * 全件検索や単一条件での検索が行えるクラス。*/
+/*受講生テーブルと受講生コース情報テーブル(mySQL データベース名StudentManagement)と紐づくリポジトリ*/
 
 @Mapper
 public interface StudentRepository {
 
+    /*受講生一覧検索機能。
+     * 全件検索を行うため、条件指定は行わない。
+     * @return 受講生一覧（全件検索）*/
     @Select("SELECT * FROM students")
     List<Student> search();
 
+    /*受講生検索。
+     * IDに紐づく任意の受講生の情報を取得する。
+     * @param id 受講生ID
+     * @return 受講生*/
     @Select("""
-    SELECT
-        id AS id,
-        name AS studentName,
-        furigana AS furigana,
-        nickname AS nickname,
-        email AS email,
-        region AS region,
-        age AS age,
-        gender AS gender,
-        remark AS remark,
-        isdeleted AS isDeleted
-    FROM students
-    WHERE id = #{id}
-""")
+                SELECT
+                    id AS id,
+                    name AS studentName,
+                    furigana AS furigana,
+                    nickname AS nickname,
+                    email AS email,
+                    region AS region,
+                    age AS age,
+                    gender AS gender,
+                    remark AS remark,
+                    isdeleted AS isDeleted
+                FROM students
+                WHERE id = #{id}
+            """)
     Student searchStudent(Long id);
 
-    /* 全てのコースを取得 */
+    /*受講生のコース情報の全件検索を行う。
+    *@return 受講生のコース情報（全件）*/
     @Select("SELECT * FROM students_courses")
     List<StudentsCourses> searchAllCoursesList();
 
+    /*受講生IDに紐づく受講生コース情報を検索する。
+    *@param studentId
+    *@return 受講生IDに紐づく受講生コース情報*/
     @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourses> searchAllCourses(Long studentId);
 
@@ -175,7 +185,7 @@ public interface StudentRepository {
                 WHERE
                     id = #{id}
             """)
-    /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
+        /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
     int updateStudent(Student student);
 
     @Update("UPDATE students_courses SET course_name = #{courseName}, start_date = #{startDate}, end_date = #{endDate} WHERE id = #{id}")
