@@ -24,14 +24,13 @@
     </tr>
     </thead>
     <tbody>
-    <tr th:each="studentDetail : ${studentList}" th:if="${studentDetail?.student != null}">
+    <tbody>
+    <tr th:each="studentDetail : ${studentList}" th:if="${studentDetail?.student != null and !studentDetail.student.isDeleted}">
         <td th:text="${studentDetail.student.id}">ID</td>
         <td>
-            <a th:href="@{/student/detail/{id}(id=${studentDetail.student.id})}"
-               th:text="${studentDetail.student.studentName}">
+            <a th:href="@{/student/detail/{id}(id=${studentDetail.student.id})}" th:text="${studentDetail.student.studentName}">
                 名前
             </a>
-            <!--/aタグ：何処にリンクを貼るか？-->
         </td>
         <td th:text="${studentDetail.student.furigana}">カナ名</td>
         <td th:text="${studentDetail.student.nickname}">ニックネーム</td>
@@ -42,6 +41,7 @@
         <td th:text="${studentDetail.student.remark}">備考</td>
     </tr>
     </tbody>
+
     <!--このtbodyのtr内thでは、studentDetailクラスにあるstudentクラスのid等を参照している。
     参照変数がstudentクラスと全く同じでないと、リストが機能しないことに留意すること-->
     <!--th:eachはリストやコレクションのループ処理を行う。このリストでは、studentDetail内の

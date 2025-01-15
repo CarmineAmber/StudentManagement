@@ -20,8 +20,11 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
+/* Lombok を使用している場合、@Slf4j アノテーションを追加するだけでログを生成可能である。*/
 public class StudentService {
 
     private final StudentRepository repository;
@@ -39,7 +42,7 @@ public class StudentService {
         return repository.searchStudents();
     }
 
-    public StudentDetail searchStudent(Long id){
+    public StudentDetail searchStudent(Long id) {
         Student student = repository.searchStudent(id);
 
         // student.getId() を Long 型に変換
@@ -132,7 +135,7 @@ public class StudentService {
 
     public StudentDetail getStudentDetailById(Long id) {
         Student student = repository.findStudentById(id);
-        if (student == null) {
+        if ( student == null ) {
             throw new IllegalArgumentException("Student not found with id: " + id);
         }
         List<StudentsCourses> courses = repository.findCoursesByStudentId(id);
@@ -142,26 +145,31 @@ public class StudentService {
         return detail;
     }
 
+    public void markAsDeleted(Long studentId) {
+        log.debug("Marking student as deleted with ID: {}", studentId);
+        repository.updateIsDeleted(studentId, true);
+    }
+    /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
+    * 使うことでログを表示できる。*/
+
+    public List<Student> getActiveStudents() {
+        return repository.findActiveStudents();
+    }
+
     @Transactional
     public void updateStudent(StudentDetail studentDetail) {
         if (studentDetail.getStudent() == null) {
             throw new IllegalArgumentException("Student object cannot be null.");
         }
 
-        // 学生情報の更新
-        repository.updateStudent(studentDetail.getStudent());
+        // デバッグ用ログ
+        System.out.println("Updating Student: " + studentDetail.getStudent());
+        System.out.println("Student ID: " + studentDetail.getStudent().getId());
 
-        for (StudentsCourses course : studentDetail.getStudentsCourses()) {
-            if (course.getId() == null) {
-                // 新規登録の場合
-                course.setStudentId(studentDetail.getStudent().getId()); // student_idを設定
-                course.setStartDate(LocalDate.now());
-                course.setEndDate(LocalDate.now().plusYears(1));
-                repository.registerStudentsCourses(course);
-            } else {
-                // 既存データの更新の場合
-                repository.updateStudentsCourses(course);
-            }
+        int updatedRows = repository.updateStudent(studentDetail.getStudent());
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Failed to update student. Student with ID "
+                    + studentDetail.getStudent().getId() + " not found.");
         }
     }
 }
