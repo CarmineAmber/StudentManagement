@@ -9,7 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class Student {
-    private String id;
+    private Integer id;
     private String studentName;
     private String furigana;
     private String nickname;
@@ -20,5 +20,5 @@ public class Student {
     private String remark;
     private Boolean isDeleted; //論理削除
 }
-/*これらのprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。
+/*このprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。
  * private変数は、メソッドを経由しないと変数の値を格納できなくなる。*/

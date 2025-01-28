@@ -7,13 +7,11 @@ import lombok.Setter;
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
 public class StudentsCourses {
-    private int id;
-    private String studentId;
+    private Integer id;
+    private Integer studentId;
     private String courseName;
     private LocalDate startDate;
     private LocalDate endDate;

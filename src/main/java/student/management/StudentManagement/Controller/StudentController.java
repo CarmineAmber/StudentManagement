@@ -1,20 +1,21 @@
 package student.management.StudentManagement.Controller;
 
+import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
 import student.management.StudentManagement.domain.StudentDetail;
+import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Controller
@@ -33,7 +34,6 @@ public class StudentController {
     public String getStudentList(Model model) {
         List<Student> students = service.searchStudentList();
         List<StudentsCourses> studentsCourses = service.searchAllCourses();
-
         model.addAttribute("studentList", converter.convertStudentDetails(students, studentsCourses));
         return "studentList";
     }
@@ -67,21 +67,51 @@ public class StudentController {
     @GetMapping("/newStudent")
     public String newStudent(Model model) {
         StudentDetail studentDetail = new StudentDetail();
-        studentDetail.setStudent(new Student()); // Student を初期化
+        studentDetail.setStudentsCourses(Arrays.asList(new StudentsCourses()));  // 必要なら空リストを初期化
         model.addAttribute("studentDetail", studentDetail);
         return "registerStudents";
     }
 
     @PostMapping("/registerStudent")
     public String registerStudent(@ModelAttribute StudentDetail studentDetail, BindingResult result) {
-        if (result.hasErrors()) {
-            return "registerStudents";
+        if ( result.hasErrors() ) {
+            return "registerStudents";  // 再度フォームを表示
         }
-
-        // service インスタンスを使用して登録処理を呼び出す
-        service.registerStudentName(studentDetail.getStudent().getStudentName());
-
+        service.registerStudent(studentDetail);
         return "redirect:/studentList";
+    }
+
+    @GetMapping("/student/{id}")
+    public String getStudent(Model model, @PathVariable Long id) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
+        if (studentDetail.getStudentsCourses() == null) {
+            studentDetail.setStudentsCourses(new ArrayList<>()); // Ensure it's not null
+        }
+        model.addAttribute("studentDetail", studentDetail);
+        return "updateStudents";
+    }
+    /*スペルミスに注意（updateStudentではない）*/
+
+    @PostMapping("/student/{id}")
+    public String updateStudent(@ModelAttribute StudentDetail studentDetail) {
+        Student student = studentDetail.getStudent();
+        if (student.getIsDeleted() != null && student.getIsDeleted()) {
+            service.markAsDeleted(student.getId().longValue()); // 型変換を追加
+        } else {
+            service.updateStudent(studentDetail);
+        }
+        return "redirect:/studentList";
+    }
+    /*/{id}としなければ個別のページを表示できない。*/
+
+    @GetMapping("/student/detail/{id}")
+    public String getStudentDetail(@PathVariable Long id, Model model) {
+        StudentDetail studentDetail = service.getStudentDetailById(id);
+        if (studentDetail == null) {
+            return "error/404"; // 学生が見つからない場合、404エラーページを表示
+        }
+        model.addAttribute("studentDetail", studentDetail);
+        return "studentDetail"; // 詳細を表示するビュー
     }
 }
     /*@Autowiredとは、Springフレームワークで用いるアノテーションのひとつ。これを記述するだけで
@@ -97,3 +127,5 @@ public class StudentController {
  * （例えば、ExcelBasicと入れると[{"studentId":5,"studentName":"野島葵","furigana":"ノジマアオイ","nickName":
  * "TEST05","email":"TEST05","region":"愛媛","age":35,"gender":"女性","courlBasic","startDate":
  * "2024-11-09T15:00:00.000+00:00","endDate":"2025-11-08T15:00:00.000+00:00"}]と出てくる）*/
+
+/*GPTを使う場合、StudentServiceで動作しない可能性がある場合はrepositoryに変更するとうまくいくようだ。*/

@@ -1,12 +1,12 @@
 package student.management.StudentManagement.repository;
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
 
@@ -14,29 +14,25 @@ import java.util.List;
  * 全件検索や単一条件での検索が行えるクラス。*/
 
 @Mapper
-public interface StudentRepository {
+public interface StudentRepository{
 
-    /* 全件検索を行う。 */
-    @Select("""
-                SELECT
-                    id,
-                    name AS studentName,
-                    furigana,
-                    nickname AS nickName,
-                    email,
-                    region,
-                    age,
-                    gender,
-                    remark,
-                    isdeleted AS isDeleted
-                FROM
-                    students
-            """)
-    List<Student> searchStudents();
+    @Select("SELECT * FROM students")
+    List<Student> search();
+
+    @Select("SELECT * FROM students WHERE id = #{id}")
+    Student searchStudent(Long id);
 
     /* 全てのコースを取得 */
     @Select("SELECT * FROM students_courses")
-    List<StudentsCourses> searchAllCourses();
+    List<StudentsCourses> searchAllCoursesList();
+
+    @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
+    List<StudentsCourses> searchAllCourses(Long studentId);
+
+    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, region, age, gender, remark, isdeleted AS isDeleted " +
+            "FROM students WHERE isdeleted = false")
+    List<Student> searchStudents();
+    /*WHERE isdeleted = falseがないとリストに非表示にならない*/
 
     /* 受講生とコース情報を結合して取得 */
     @Select("""
@@ -125,6 +121,79 @@ public interface StudentRepository {
             VALUES (#{name})
             """)
     void insertStudentName(@Param("name") String name);
+
+    @Select("SELECT * FROM courses")
+    List<StudentsCourses> findAll();
+
+    @Insert("""
+    INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark, isDeleted)
+    VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark}, false)
+""")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void registerStudent(Student student);
+
+    @Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
+            "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    void registerStudentsCourses(StudentsCourses studentsCourses);
+
+    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
+            "region, age, gender, remark FROM students WHERE id = #{id}")
+    Student findStudentById(@Param("id") Long id);
+
+    @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
+            "FROM students_courses WHERE student_id = #{studentId}")
+    List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
+
+    @Update("""
+    UPDATE students
+    SET name = #{studentName},
+        furigana = #{furigana},
+        nickname = #{nickname},
+        email = #{email},
+        region = #{region},
+        age = #{age},
+        gender = #{gender},
+        remark = #{remark},
+        isdeleted = COALESCE(#{isDeleted}, false)
+    WHERE id = #{id}
+""")
+    int updateStudent(Student student);
+
+    @Update("UPDATE students_courses SET course_name = #{courseName} WHERE id = #{id}")
+    int updateStudentsCourses(StudentsCourses studentsCourses);
+
+    @Insert("""
+    INSERT INTO students_courses (student_id, course_name, start_date, end_date)
+    VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
+""")
+    void insertStudentsCourses(StudentsCourses studentsCourses);
+
+    @Select("""
+    SELECT
+        id,
+        name AS studentName,
+        furigana,
+        nickname AS nickName,
+        email,
+        region,
+        age,
+        gender,
+        remark,
+        isdeleted
+    FROM
+        students
+    WHERE
+        id = #{id}
+""")
+    StudentDetail findStudentDetailById(@Param("id") Long id);
+
+    @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")
+    void updateIsDeleted(@Param("id") Long id, @Param("isDeleted") boolean isDeleted);
+
+    @Modifying
+    @Query("SELECT s FROM Student s WHERE s.isDeleted = false")
+    List<Student> findActiveStudents();
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、
@@ -134,3 +203,6 @@ public interface StudentRepository {
    している。
    全件検索、全てのコース名を取得、受講生とコース情報を結合して取得の場合はそもそも#{}を利用するケースが
    ないため、文字列そのものがクエリに埋め込まれることはない。*/
+/*@Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
+            "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")は、一括でエイリアスをつけている。*/
+/*chatGPTを使ってうまく動作しない場合は、リポジトリをその都度作成する必要あり？*/

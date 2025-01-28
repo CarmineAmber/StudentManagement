@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -16,9 +17,14 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
+@Slf4j
+/* Lombok を使用している場合、@Slf4j アノテーションを追加するだけでログを生成可能である。*/
 public class StudentService {
 
     private final StudentRepository repository;
@@ -36,8 +42,20 @@ public class StudentService {
         return repository.searchStudents();
     }
 
+    public StudentDetail searchStudent(Long id) {
+        Student student = repository.searchStudent(id);
+
+        // student.getId() を Long 型に変換
+        List<StudentsCourses> studentsCourses = repository.searchAllCourses(Long.valueOf(student.getId()));
+
+        StudentDetail studentDetail = new StudentDetail();
+        studentDetail.setStudent(student);
+        studentDetail.setStudentsCourses(studentsCourses);
+        return studentDetail;
+    }
+
     public List<StudentsCourses> searchAllCourses() {
-        return repository.searchAllCourses();
+        return repository.searchAllCoursesList();
     }
 
     public List<StudentsWithCourses> searchStudentsWithCourses() {
@@ -68,7 +86,7 @@ public class StudentService {
             // InputStreamの読み込み
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-            /*UTF_8を設定しないと文字化けする。*/
+            /*ここでUTF_8を設定しないと文字化けする。*/
             StringBuilder response = new StringBuilder();
             String line;
 
@@ -91,13 +109,68 @@ public class StudentService {
         }
         return null;
     }
-    public void registerStudentName(String studentName) {
-        if (studentName == null || studentName.isEmpty()) {
-            throw new IllegalArgumentException("名前が空です。");
+
+    @Transactional
+    public void registerStudent(StudentDetail studentDetail) {
+        repository.registerStudent(studentDetail.getStudent());
+        studentDetail.getStudent().getId();
+        /*このWebアプリでは、サービスにトランザクション処理を記載している。
+         * サービス層に記載することを推奨している。*/
+        /*TODO：コース情報登録も行う。*/
+        for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
+            studentsCourses.setStudentId(studentDetail.getStudent().getId());
+            studentsCourses.setStartDate(LocalDate.now());
+            studentsCourses.setEndDate(LocalDate.now().plusYears(1));
+            repository.registerStudentsCourses(studentsCourses);
+        }
+    }
+
+    public Student findStudentById(Long id) {
+        return repository.findStudentById(id); // Repository に対応するメソッドを追加する
+    }
+
+    public List<StudentsCourses> findCoursesByStudentId(Long studentId) {
+        return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
+    }
+
+    public StudentDetail getStudentDetailById(Long id) {
+        Student student = repository.findStudentById(id);
+        if ( student == null ) {
+            throw new IllegalArgumentException("Student not found with id: " + id);
+        }
+        List<StudentsCourses> courses = repository.findCoursesByStudentId(id);
+        StudentDetail detail = new StudentDetail();
+        detail.setStudent(student);
+        detail.setStudentsCourses(courses);
+        return detail;
+    }
+
+    public void markAsDeleted(Long studentId) {
+        log.debug("Marking student as deleted with ID: {}", studentId);
+        repository.updateIsDeleted(studentId, true);
+    }
+    /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
+    * 使うことでログを表示できる。*/
+
+    public List<Student> getActiveStudents() {
+        return repository.findActiveStudents();
+    }
+
+    @Transactional
+    public void updateStudent(StudentDetail studentDetail) {
+        if (studentDetail.getStudent() == null) {
+            throw new IllegalArgumentException("Student object cannot be null.");
         }
 
-        // リポジトリを使用して名前を登録
-        repository.insertStudentName(studentName);
+        // デバッグ用ログ
+        System.out.println("Updating Student: " + studentDetail.getStudent());
+        System.out.println("Student ID: " + studentDetail.getStudent().getId());
+
+        int updatedRows = repository.updateStudent(studentDetail.getStudent());
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Failed to update student. Student with ID "
+                    + studentDetail.getStudent().getId() + " not found.");
+        }
     }
 }
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
