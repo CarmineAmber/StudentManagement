@@ -1,8 +1,6 @@
 package student.management.StudentManagement.repository;
 
 import org.apache.ibatis.annotations.*;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -10,26 +8,51 @@ import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
 
-/*受講生情報を扱うリポジトリ。
- * 全件検索や単一条件での検索が行えるクラス。*/
+/*受講生テーブルと受講生コース情報テーブル(mySQL データベース名StudentManagement)と紐づくリポジトリ*/
 
 @Mapper
-public interface StudentRepository{
+public interface StudentRepository {
 
+    /*受講生一覧検索機能。
+     * 全件検索を行うため、条件指定は行わない。
+     * @return 受講生一覧（全件検索）*/
     @Select("SELECT * FROM students")
     List<Student> search();
 
-    @Select("SELECT * FROM students WHERE id = #{id}")
+    /*受講生検索。
+     * IDに紐づく任意の受講生の情報を取得する。
+     * @param id 受講生ID
+     * @return 受講生*/
+    @Select("""
+                SELECT
+                    id AS id,
+                    name AS studentName,
+                    furigana AS furigana,
+                    nickname AS nickname,
+                    email AS email,
+                    region AS region,
+                    age AS age,
+                    gender AS gender,
+                    remark AS remark,
+                    isdeleted AS isDeleted
+                FROM students
+                WHERE id = #{id}
+            """)
     Student searchStudent(Long id);
 
-    /* 全てのコースを取得 */
+    /*受講生のコース情報の全件検索を行う。
+    *@return 受講生のコース情報（全件）*/
     @Select("SELECT * FROM students_courses")
     List<StudentsCourses> searchAllCoursesList();
 
+    /*受講生IDに紐づく受講生コース情報を検索する。
+    *@param studentId
+    *@return 受講生IDに紐づく受講生コース情報*/
     @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourses> searchAllCourses(Long studentId);
 
-    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, region, age, gender, remark, isdeleted AS isDeleted " +
+    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, " +
+            "email, region, age, gender, remark, isdeleted AS isDeleted " +
             "FROM students WHERE isdeleted = false")
     List<Student> searchStudents();
     /*WHERE isdeleted = falseがないとリストに非表示にならない*/
@@ -126,9 +149,11 @@ public interface StudentRepository{
     List<StudentsCourses> findAll();
 
     @Insert("""
-    INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark, isDeleted)
-    VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark}, false)
-""")
+                INSERT INTO students (name, furigana, nickname, email,
+                region, age, gender, remark, isDeleted)
+                VALUES (#{studentName}, #{furigana}, #{nickname}, #{email},
+                #{region}, #{age}, #{gender}, #{remark}, false)
+            """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudent(Student student);
 
@@ -146,54 +171,54 @@ public interface StudentRepository{
     List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
 
     @Update("""
-    UPDATE students
-    SET name = #{studentName},
-        furigana = #{furigana},
-        nickname = #{nickname},
-        email = #{email},
-        region = #{region},
-        age = #{age},
-        gender = #{gender},
-        remark = #{remark},
-        isdeleted = COALESCE(#{isDeleted}, false)
-    WHERE id = #{id}
-""")
+                UPDATE students
+                SET
+                    name = #{studentName},
+                    furigana = #{furigana},
+                    nickname = #{nickname},
+                    email = #{email},
+                    region = #{region},
+                    age = #{age},
+                    gender = #{gender},
+                    remark = #{remark},
+                    isdeleted = COALESCE(#{isDeleted}, false)
+                WHERE
+                    id = #{id}
+            """)
+        /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
     int updateStudent(Student student);
 
-    @Update("UPDATE students_courses SET course_name = #{courseName} WHERE id = #{id}")
+    @Update("UPDATE students_courses SET course_name = #{courseName}, start_date = #{startDate}, end_date = #{endDate} WHERE id = #{id}")
     int updateStudentsCourses(StudentsCourses studentsCourses);
 
     @Insert("""
-    INSERT INTO students_courses (student_id, course_name, start_date, end_date)
-    VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
-""")
+                INSERT INTO students_courses (student_id, course_name, start_date, end_date)
+                VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
+            """)
     void insertStudentsCourses(StudentsCourses studentsCourses);
 
     @Select("""
-    SELECT
-        id,
-        name AS studentName,
-        furigana,
-        nickname AS nickName,
-        email,
-        region,
-        age,
-        gender,
-        remark,
-        isdeleted
-    FROM
-        students
-    WHERE
-        id = #{id}
-""")
+                SELECT
+                    id,
+                    name AS studentName,
+                    furigana,
+                    nickname AS nickName,
+                    email,
+                    region,
+                    age,
+                    gender,
+                    remark,
+                    isdeleted
+                FROM
+                    students
+                WHERE
+                    id = #{id}
+            """)
     StudentDetail findStudentDetailById(@Param("id") Long id);
 
     @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")
     void updateIsDeleted(@Param("id") Long id, @Param("isDeleted") boolean isDeleted);
 
-    @Modifying
-    @Query("SELECT s FROM Student s WHERE s.isDeleted = false")
-    List<Student> findActiveStudents();
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

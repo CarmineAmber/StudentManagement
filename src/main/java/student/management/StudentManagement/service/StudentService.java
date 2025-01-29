@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourses;
@@ -18,111 +19,114 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
+
 import lombok.extern.slf4j.Slf4j;
+
+/*受講生情報を取り扱うサービス。
+* 受講生の検索や登録・更新処理を行う*/
 
 @Service
 @Slf4j
-/* Lombok を使用している場合、@Slf4j アノテーションを追加するだけでログを生成可能である。*/
+/* ログを確認してデバッグを行うこと*/
 public class StudentService {
 
     private final StudentRepository repository;
+    private StudentConverter converter;
+    /*finalを宣言すると、そのクラスを継承したクラスにおいてそのメソッドを
+     * オーバーライドできなくなる。コンストラクタの宣言にfinalを使用することはない*/
 
     @Autowired
 
-    public StudentService(StudentRepository repository) {
+    public StudentService(StudentRepository repository,StudentConverter converter) {
         this.repository = repository;
+        this.converter = converter;
     }
     /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
     インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
     repositoryを呼び出せる。これを行うことで上書きが容易になる。*/
 
-    public List<Student> searchStudentList() {
-        return repository.searchStudents();
+    /*受講生一覧検索機能。
+     * 全件検索を行うため、条件指定は行わない。
+     * @return 受講生一覧（全件検索）*/
+    public List<StudentDetail> searchStudentList() {
+        List<Student> studentList = repository.search();
+        List<StudentsCourses> studentsCoursesList = repository.searchAllCoursesList();
+        return converter.convertStudentDetails(studentList,studentsCoursesList);
     }
 
+    public int updateStudentsCourses(StudentsCourses studentsCourses) {
+        log.debug("Updating StudentsCourses: {}", studentsCourses);
+        return repository.updateStudentsCourses(studentsCourses);
+    }
+
+    /*受講生検索。
+     * IDに紐づく任意の受講生の情報を取得する。
+     * @param id 受講生ID
+     * @return 受講生*/
     public StudentDetail searchStudent(Long id) {
         Student student = repository.searchStudent(id);
 
         // student.getId() を Long 型に変換
         List<StudentsCourses> studentsCourses = repository.searchAllCourses(Long.valueOf(student.getId()));
-
-        StudentDetail studentDetail = new StudentDetail();
-        studentDetail.setStudent(student);
-        studentDetail.setStudentsCourses(studentsCourses);
-        return studentDetail;
-    }
-
-    public List<StudentsCourses> searchAllCourses() {
-        return repository.searchAllCoursesList();
+        return new StudentDetail(student,studentsCourses);
     }
 
     public List<StudentsWithCourses> searchStudentsWithCourses() {
         return repository.searchStudentsWithCourses();
     }
 
-    public List<Student> searchStudentsIn30s() {
-        return repository.searchStudentsInAgeRange(30, 39);
-    }
-
-    public List<StudentsWithCourses> searchStudentsByCourseName(String courseName) {
-        return repository.searchStudentsByCourseName(courseName);
-    }
-
     public List<Student> fetchStudentsFromApi() {
         try {
-            /*URLの設定*/
             URL url = new URL("http://localhost:8080/studentList");
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            /*HttpURLConnectionとは、httpを基にget,post,put,deleteなどのリクエストを
-             * サポートする。このコードでは、下記のcon.setRequestMethod("GET");と
-             * con.setRequestProperty("Accept", "application/json");という
-             * リクエストをサポートしている。*/
             con.setRequestMethod("GET");
             con.setRequestProperty("Accept", "application/json");
-            /*JAVAでAPI通信を使ってJSONを取得するための接続設定。*/
 
-            // InputStreamの読み込み
             BufferedReader reader = new BufferedReader(
                     new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
-            /*ここでUTF_8を設定しないと文字化けする。*/
             StringBuilder response = new StringBuilder();
             String line;
 
             while ((line = reader.readLine()) != null) {
-                response.append(line.trim());  // 改行やスペースを削除して結合
+                response.append(line.trim());
             }
             reader.close();
 
-            /*JSONのパース（JSON形式の文字列をJAVAオブジェクトに変換する）。ObjectMapperとは、JAVAオブジェクトと
-            JSONのパースを簡単にするためのjacksonパッケージの１つ。*/
             ObjectMapper objectMapper = new ObjectMapper();
             objectMapper.configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-            // JSONをList<Student>にパース
             return objectMapper.readValue(response.toString(), new TypeReference<List<Student>>() {
             });
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Failed to fetch students from API", e);
+            throw new RuntimeException("Unable to fetch students from API.", e);
         }
-        return null;
     }
 
     @Transactional
-    public void registerStudent(StudentDetail studentDetail) {
+    public StudentDetail registerStudent(StudentDetail studentDetail) {
+        // 学生情報を登録
         repository.registerStudent(studentDetail.getStudent());
-        studentDetail.getStudent().getId();
-        /*このWebアプリでは、サービスにトランザクション処理を記載している。
-         * サービス層に記載することを推奨している。*/
-        /*TODO：コース情報登録も行う。*/
+
+        // データベースで生成されたIDを取得
+        Integer generatedId = studentDetail.getStudent().getId();
+
+        if ( generatedId == null ) {
+            throw new IllegalStateException("Student ID was not generated after registration.");
+        }
+
+        // 登録するコース情報を設定
         for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
-            studentsCourses.setStudentId(studentDetail.getStudent().getId());
+            studentsCourses.setStudentId(generatedId);
             studentsCourses.setStartDate(LocalDate.now());
             studentsCourses.setEndDate(LocalDate.now().plusYears(1));
             repository.registerStudentsCourses(studentsCourses);
         }
+
+        // studentDetail を返す
+        return studentDetail;
     }
 
     public Student findStudentById(Long id) {
@@ -150,15 +154,11 @@ public class StudentService {
         repository.updateIsDeleted(studentId, true);
     }
     /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
-    * 使うことでログを表示できる。*/
-
-    public List<Student> getActiveStudents() {
-        return repository.findActiveStudents();
-    }
+     * 使うことでログを表示できる。主にデバッグで使用する*/
 
     @Transactional
     public void updateStudent(StudentDetail studentDetail) {
-        if (studentDetail.getStudent() == null) {
+        if ( studentDetail.getStudent() == null ) {
             throw new IllegalArgumentException("Student object cannot be null.");
         }
 
@@ -167,11 +167,32 @@ public class StudentService {
         System.out.println("Student ID: " + studentDetail.getStudent().getId());
 
         int updatedRows = repository.updateStudent(studentDetail.getStudent());
-        if (updatedRows == 0) {
+        if ( updatedRows == 0 ) {
             throw new IllegalStateException("Failed to update student. Student with ID "
                     + studentDetail.getStudent().getId() + " not found.");
         }
     }
+
+    @Transactional
+    public void updateStudentWithCourses(StudentDetail studentDetail) {
+        // 学生情報の更新
+        int updatedRows = repository.updateStudent(studentDetail.getStudent());
+        if ( updatedRows == 0 ) {
+            throw new IllegalStateException("学生情報の更新に失敗しました。該当する学生が見つかりません。");
+        }
+
+        // コース情報の更新
+        for (StudentsCourses course : studentDetail.getStudentsCourses()) {
+            int updatedCourseRows = repository.updateStudentsCourses(course);
+            if ( updatedCourseRows == 0 ) {
+                throw new IllegalStateException("コース情報の更新に失敗しました。学生ID: " + course.getStudentId());
+            }
+        }
+    }
+    /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
+     * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
+     * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を
+     * 行わない場合、読み取り専用モードにも設定できる*/
 }
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
