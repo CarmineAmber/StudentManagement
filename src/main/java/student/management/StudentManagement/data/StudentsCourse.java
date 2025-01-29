@@ -9,7 +9,7 @@ import lombok.Setter;
 import java.time.LocalDate;
 @Getter
 @Setter
-public class StudentsCourses {
+public class StudentsCourse {
     private Integer id;
     private Integer studentId;
     private String courseName;

@@ -3,7 +3,7 @@ package student.management.StudentManagement.repository;
 import org.apache.ibatis.annotations.*;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
-import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
@@ -16,7 +16,20 @@ public interface StudentRepository {
     /*受講生一覧検索機能。
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
-    @Select("SELECT * FROM students")
+    @Select("""
+        SELECT
+            id AS id,
+            name AS studentName,
+            furigana AS furigana,
+            nickname AS nickname,
+            email AS email,
+            region AS region,
+            age AS age,
+            gender AS gender,
+            remark AS remark,
+            isdeleted AS isDeleted
+        FROM students
+    """)
     List<Student> search();
 
     /*受講生検索。
@@ -43,13 +56,13 @@ public interface StudentRepository {
     /*受講生のコース情報の全件検索を行う。
     *@return 受講生のコース情報（全件）*/
     @Select("SELECT * FROM students_courses")
-    List<StudentsCourses> searchAllCoursesList();
+    List<StudentsCourse> searchAllCoursesList();
 
     /*受講生IDに紐づく受講生コース情報を検索する。
     *@param studentId
     *@return 受講生IDに紐づく受講生コース情報*/
     @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
-    List<StudentsCourses> searchAllCourses(Long studentId);
+    List<StudentsCourse> searchAllCourse(Long studentId);
 
     @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, " +
             "email, region, age, gender, remark, isdeleted AS isDeleted " +
@@ -146,8 +159,11 @@ public interface StudentRepository {
     void insertStudentName(@Param("name") String name);
 
     @Select("SELECT * FROM courses")
-    List<StudentsCourses> findAll();
+    List<StudentsCourse> findAll();
 
+    /*受講生を新規登録する。
+    *IDに関しては自動採番を行う。
+    *@param student 受講生*/
     @Insert("""
                 INSERT INTO students (name, furigana, nickname, email,
                 region, age, gender, remark, isDeleted)
@@ -157,10 +173,13 @@ public interface StudentRepository {
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudent(Student student);
 
+    /*受講生コース情報を新規登録する。
+    *IDに関しては自動採番を行う。
+    *@param studentsCourses 受講生コース情報*/
     @Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
             "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
-    void registerStudentsCourses(StudentsCourses studentsCourses);
+    void registerStudentCourse(StudentsCourse studentsCourse);
 
     @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
             "region, age, gender, remark FROM students WHERE id = #{id}")
@@ -168,8 +187,10 @@ public interface StudentRepository {
 
     @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
             "FROM students_courses WHERE student_id = #{studentId}")
-    List<StudentsCourses> findCoursesByStudentId(@Param("studentId") Long studentId);
+    List<StudentsCourse> findCoursesByStudentId(@Param("studentId") Long studentId);
 
+    /*受講生情報を更新する。
+    * @param student 受講生*/
     @Update("""
                 UPDATE students
                 SET
@@ -188,14 +209,16 @@ public interface StudentRepository {
         /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
     int updateStudent(Student student);
 
+    /*受講生コース情報のコース名を更新する。
+    * @param studentCourse 受講生コース情報*/
     @Update("UPDATE students_courses SET course_name = #{courseName}, start_date = #{startDate}, end_date = #{endDate} WHERE id = #{id}")
-    int updateStudentsCourses(StudentsCourses studentsCourses);
+    int updateStudentCourse(StudentsCourse studentsCourse);
 
     @Insert("""
                 INSERT INTO students_courses (student_id, course_name, start_date, end_date)
                 VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
             """)
-    void insertStudentsCourses(StudentsCourses studentsCourses);
+    int insertStudentsCourses(StudentsCourse studentsCourse);
 
     @Select("""
                 SELECT

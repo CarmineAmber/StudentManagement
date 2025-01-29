@@ -2,7 +2,7 @@ package student.management.StudentManagement.Controller.converter;
 
 import org.springframework.stereotype.Component;
 import student.management.StudentManagement.data.Student;
-import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.ArrayList;
@@ -17,28 +17,28 @@ public class StudentConverter {
     * @param students 受講生一覧
     * @param studentsCourses 受講生コース情報のリスト
     * @return 受講生詳細情報のリスト*/
-    public List<StudentDetail> convertStudentDetails(List<Student> students, List<StudentsCourses> studentsCourses) {
+    public List<StudentDetail> convertStudentDetails
+    (List<Student> students, List<StudentsCourse> studentsCourses) {
         List<StudentDetail> studentDetails = new ArrayList<>();
         students.forEach(student -> {
             StudentDetail studentDetail = new StudentDetail();
             studentDetail.setStudent(student);
 
-            List<StudentsCourses> convertStudentsCourses = studentsCourses.stream()
-                    .filter(studentCourse -> studentCourse.getStudentId() != null) // NULLを除外
+            List<StudentsCourse> convertstudentsCourseList = studentsCourses.stream()
                     .filter(studentCourse -> student.getId().equals(studentCourse.getStudentId()))
                     .collect(Collectors.toList());
             /*SQLにコース登録の失敗で積み重なったNullが表示されていたため、サーバーエラーが発生していた。
             *.filter(studentCourse -> studentCourse.getStudentId() != null)を使うことで
             *NULLのデータを除外できる*/
 
-            studentDetail.setStudentsCourses(convertStudentsCourses);
+            studentDetail.setStudentCourseList(convertstudentsCourseList);
             studentDetails.add(studentDetail);
         });
 
         // デバッグ用ログ
         studentDetails.forEach(detail -> {
             System.out.println("Student: " + detail.getStudent().getId());
-            detail.getStudentsCourses().forEach(course ->
+            detail.getStudentCourseList().forEach(course ->
                     System.out.println("Course: " + course.getCourseName()));
         });
 

@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
-import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.repository.StudentRepository;
 
@@ -19,12 +19,14 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import lombok.extern.slf4j.Slf4j;
 
 /*受講生情報を取り扱うサービス。
-* 受講生の検索や登録・更新処理を行う*/
+ * 受講生の検索や登録・更新処理を行う*/
 
 @Service
 @Slf4j
@@ -38,7 +40,7 @@ public class StudentService {
 
     @Autowired
 
-    public StudentService(StudentRepository repository,StudentConverter converter) {
+    public StudentService(StudentRepository repository, StudentConverter converter) {
         this.repository = repository;
         this.converter = converter;
     }
@@ -46,30 +48,34 @@ public class StudentService {
     インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
     repositoryを呼び出せる。これを行うことで上書きが容易になる。*/
 
-    /*受講生一覧検索機能。
+    /*受講生一覧詳細検索機能。
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
     public List<StudentDetail> searchStudentList() {
         List<Student> studentList = repository.search();
-        List<StudentsCourses> studentsCoursesList = repository.searchAllCoursesList();
-        return converter.convertStudentDetails(studentList,studentsCoursesList);
+        studentList.forEach(student -> System.out.println("Repository Output: " + student));
+        List<StudentsCourse> studentCourseList = repository.searchAllCoursesList();
+
+        List<StudentDetail> studentDetails = converter.convertStudentDetails(studentList, studentCourseList);
+        studentDetails.forEach(detail -> System.out.println("Converted Detail: " + detail));
+        return converter.convertStudentDetails(studentList, studentCourseList);
     }
 
-    public int updateStudentsCourses(StudentsCourses studentsCourses) {
+    public int updateStudentsCourses(StudentsCourse studentsCourses) {
         log.debug("Updating StudentsCourses: {}", studentsCourses);
-        return repository.updateStudentsCourses(studentsCourses);
+        return repository.updateStudentCourse(studentsCourses);
     }
 
-    /*受講生検索。
+    /*受講生詳細検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
-     * @return 受講生*/
+     * @return 受講生詳細*/
     public StudentDetail searchStudent(Long id) {
         Student student = repository.searchStudent(id);
 
         // student.getId() を Long 型に変換
-        List<StudentsCourses> studentsCourses = repository.searchAllCourses(Long.valueOf(student.getId()));
-        return new StudentDetail(student,studentsCourses);
+        List<StudentsCourse> studentCourse = repository.searchAllCourse(Long.valueOf(student.getId()));
+        return new StudentDetail(student, studentCourse);
     }
 
     public List<StudentsWithCourses> searchStudentsWithCourses() {
@@ -105,35 +111,49 @@ public class StudentService {
         }
     }
 
+    /*受講生詳細の登録を行う。
+     *受講生と受オク生コース情報を個別に登録し、受講生コース情報には受講生情報を
+     *紐づける値とコース開始日、コース終了日を設定する。
+     *@param studentDetail 受講生詳細
+     *@return 登録情報を付与した受講生詳細*/
     @Transactional
     public StudentDetail registerStudent(StudentDetail studentDetail) {
         // 学生情報を登録
-        repository.registerStudent(studentDetail.getStudent());
+        Student student = studentDetail.getStudent();
+        repository.registerStudent(student);
 
         // データベースで生成されたIDを取得
-        Integer generatedId = studentDetail.getStudent().getId();
+        Integer generatedId = student.getId();
 
         if ( generatedId == null ) {
             throw new IllegalStateException("Student ID was not generated after registration.");
         }
 
-        // 登録するコース情報を設定
-        for (StudentsCourses studentsCourses : studentDetail.getStudentsCourses()) {
-            studentsCourses.setStudentId(generatedId);
-            studentsCourses.setStartDate(LocalDate.now());
-            studentsCourses.setEndDate(LocalDate.now().plusYears(1));
-            repository.registerStudentsCourses(studentsCourses);
-        }
+        // 登録するコース情報を設定。forEachストリームにすることで、一括したリピート処理を行える
+        studentDetail.getStudentCourseList().forEach(studentsCourses -> {
+            initStudentsCourses(studentsCourses, generatedId);
+            repository.registerStudentCourse(studentsCourses);
+        });
 
         // studentDetail を返す
         return studentDetail;
+    }
+
+    /*受講生コース情報を登録する際の初期情報を設定する。
+     *@param studentsCourses 受講生コース情報
+     *@param student 受講生*/
+    private void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
+        studentCourse.setStudentId(generatedId);
+        LocalDate now = LocalDate.now();
+        studentCourse.setStartDate(now);
+        studentCourse.setEndDate(now.plusYears(1));
     }
 
     public Student findStudentById(Long id) {
         return repository.findStudentById(id); // Repository に対応するメソッドを追加する
     }
 
-    public List<StudentsCourses> findCoursesByStudentId(Long studentId) {
+    public List<StudentsCourse> findCoursesByStudentId(Long studentId) {
         return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
     }
 
@@ -142,10 +162,10 @@ public class StudentService {
         if ( student == null ) {
             throw new IllegalArgumentException("Student not found with id: " + id);
         }
-        List<StudentsCourses> courses = repository.findCoursesByStudentId(id);
+        List<StudentsCourse> courses = repository.findCoursesByStudentId(id);
         StudentDetail detail = new StudentDetail();
         detail.setStudent(student);
-        detail.setStudentsCourses(courses);
+        detail.setStudentCourseList(courses);
         return detail;
     }
 
@@ -156,6 +176,9 @@ public class StudentService {
     /*lombokを使用している場合、import lombok.extern.slf4j.Slf4j; @Slf4jを
      * 使うことでログを表示できる。主にデバッグで使用する*/
 
+    /*受講生詳細の更新を行う。
+     * 受講生と受講生コース情報をそれぞれ更新する。
+     * @param studentDetail 受講生詳細*/
     @Transactional
     public void updateStudent(StudentDetail studentDetail) {
         if ( studentDetail.getStudent() == null ) {
@@ -181,11 +204,11 @@ public class StudentService {
             throw new IllegalStateException("学生情報の更新に失敗しました。該当する学生が見つかりません。");
         }
 
-        // コース情報の更新
-        for (StudentsCourses course : studentDetail.getStudentsCourses()) {
-            int updatedCourseRows = repository.updateStudentsCourses(course);
+        // コース情報の更新または挿入
+        for (StudentsCourse course : Optional.ofNullable(studentDetail.getStudentCourseList()).orElse(Collections.emptyList())) {
+            int updatedCourseRows = repository.updateStudentCourse(course);
             if ( updatedCourseRows == 0 ) {
-                throw new IllegalStateException("コース情報の更新に失敗しました。学生ID: " + course.getStudentId());
+                repository.insertStudentsCourses(course); // 新規挿入
             }
         }
     }

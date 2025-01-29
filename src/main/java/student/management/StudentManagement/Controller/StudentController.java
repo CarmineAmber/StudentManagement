@@ -1,18 +1,15 @@
 package student.management.StudentManagement.Controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import student.management.StudentManagement.Controller.converter.StudentConverter;
-import student.management.StudentManagement.data.Student;
-import student.management.StudentManagement.data.StudentsCourses;
+import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
-import java.util.Arrays;
 import java.util.List;
 
 /*受講生の検索や登録、更新などを行うREST APIとして受け付けるController*/
@@ -34,11 +31,13 @@ public class StudentController {
     記載するだけでインスタンスとして成立させている。尚、this.service = service;
     this.converter = converterはStudentServiceとStudentConverterをこのクラスに紐づけている。*/
 
-    /*受講生一覧検索機能。
+    /*受講生詳細の一覧検索機能。
     * 全件検索を行うため、条件指定は行わない。
-    * @return 受講生一覧（全件検索）*/
+    * @return 受講生詳細一覧（全件検索）*/
     @GetMapping("/studentList")
     public List<StudentDetail> getStudentList() {
+        List<StudentDetail> studentDetails = service.searchStudentList();
+        studentDetails.forEach(detail -> System.out.println("Response Name: " + detail.getStudent().getStudentName()));
         return service.searchStudentList();
     }
 
@@ -49,8 +48,9 @@ public class StudentController {
      * 簡単に利用できる。また、BindingResultを利用してエラーを簡単に処理できる。*/
     /*スペルミスに注意（updateStudentではない）*/
 
-    /*受講生登録。
-    *@return 受講生とコース情報*/
+    /*受講生詳細のの登録を行う。
+    *@param studentDetail 受講生詳細
+    *@return 実行結果*/
     @PostMapping("/registerStudent")
     public ResponseEntity<StudentDetail> registerStudent(@RequestBody StudentDetail studentDetail) {
         try {
@@ -64,7 +64,7 @@ public class StudentController {
     }
     /*public ResponseEntity<String>とするとnullになるので注意すること*/
 
-    /*受講生検索。
+    /*受講生詳細の検索。
     * IDに紐づく任意の受講生の情報を取得する。
     * @param id 受講生ID
     * @return 受講生*/
@@ -107,12 +107,33 @@ public class StudentController {
     }
 
     @PostMapping("/updateCourse")
-    public ResponseEntity<String> updateCourse(@RequestBody StudentsCourses studentsCourses) {
+    public ResponseEntity<String> updateCourse(@RequestBody StudentsCourse studentsCourses) {
         int rowsAffected = service.updateStudentsCourses(studentsCourses);
         if ( rowsAffected > 0 ) {
             return ResponseEntity.ok("コース名の更新に成功しました。");
         }
         return ResponseEntity.status(400).body("更新処理が失敗しました。");
+    }
+
+    /*受講生詳細の更新を行う。キャンセルフラグの更新もここで行う（論理削除）。
+    * @param studentDetail 受講生詳細
+    * @return 実行結果*/
+    @PutMapping("/updateStudents")
+    public ResponseEntity<String> updateStudent(@RequestBody StudentDetail studentDetail) {
+        try {
+            // Service層で学生情報とコース情報を同時に更新
+            service.updateStudentWithCourses(studentDetail);
+            return ResponseEntity.ok("受講生の更新に成功しました。");
+        } catch (IllegalStateException e) {
+            // 学生が存在しない場合のエラーハンドリング
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            // リクエストデータが不正な場合のエラーハンドリング
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            // その他のエラーハンドリング
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("受講生の更新に失敗しました。");
+        }
     }
 
 }
