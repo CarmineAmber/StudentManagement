@@ -16,20 +16,7 @@ public interface StudentRepository {
     /*受講生一覧検索機能。
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
-    @Select("""
-        SELECT
-            id AS id,
-            name AS studentName,
-            furigana AS furigana,
-            nickname AS nickname,
-            email AS email,
-            region AS region,
-            age AS age,
-            gender AS gender,
-            remark AS remark,
-            isdeleted AS isDeleted
-        FROM students
-    """)
+
     List<Student> search();
 
     /*受講生検索。

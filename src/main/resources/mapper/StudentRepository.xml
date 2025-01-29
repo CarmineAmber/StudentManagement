@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "file:///Users/hiyosiryouta/IdeaProjects/StudentManagement/src/main/resources/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="student.management.repository.StudentRepository">
+    <!--受講生の全件検索-->
+    <select id="search" resultType="student.management.StudentManagement.repository.StudentRepository">
+        SELECT
+        id AS id,
+        name AS studentName,
+        furigana AS furigana,
+        nickname AS nickname,
+        email AS email,
+        region AS region,
+        age AS age,
+        gender AS gender,
+        remark AS remark,
+        isdeleted AS isDeleted
+        FROM students
+    </select>
+
+    <!--受講生の単一検索-->
+    <select id="searchStudent" resultType="student">
+        SELECT
+        id AS id,
+        name AS studentName,
+        furigana AS furigana,
+        nickname AS nickname,
+        email AS email,
+        region AS region,
+        age AS age,
+        gender AS gender,
+        remark AS remark,
+        isdeleted AS isDeleted
+        FROM students
+        WHERE id = #{id}
+    </select>
+</mapper>
