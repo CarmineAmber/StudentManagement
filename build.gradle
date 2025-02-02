@@ -24,6 +24,15 @@ repositories {/*外部ライブラリを何処からダウンロードしてき�
 	mavenCentral()
 }
 
+sourceSets {
+	main {
+		resources {
+			srcDirs = ['src/main/resources']
+			include 'mapper/**/*.xml'
+		}
+	}
+}
+
 dependencies {/*依存関係及びスターターの編集*/
 	/*Spring Boot*/
 	implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -51,6 +60,7 @@ dependencies {/*依存関係及びスターターの編集*/
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web' // 必要に応じて追加
 	implementation 'com.h2database:h2'
+
 }
 
 tasks.named('test') {
