@@ -15,6 +15,42 @@
         WHERE id = #{id}
     </select>
 
+    <insert id="registerStudent" parameterType="student.management.StudentManagement.data.Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark, isdeleted)
+        VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark}, false)
+    </insert>
+
+    <insert id="registerStudentCourse" parameterType="student.management.StudentManagement.data.StudentsCourse" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO students_courses (student_id, course_name, start_date, end_date)
+        VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
+    </insert>
+
+    <update id="updateStudent" parameterType="student.management.StudentManagement.data.Student">
+        UPDATE students
+        SET
+        name = #{studentName},
+        furigana = #{furigana},
+        nickname = #{nickname},
+        email = #{email},
+        region = #{region},
+        age = #{age},
+        gender = #{gender},
+        remark = #{remark},
+        isdeleted = COALESCE(#{isDeleted}, false)
+        WHERE
+        id = #{id}
+    </update>
+
+    <update id="updateStudentCourse" parameterType="student.management.StudentManagement.data.StudentsCourse">
+        UPDATE students_courses
+        SET
+        course_name = #{courseName},
+        start_date = #{startDate},
+        end_date = #{endDate}
+        WHERE
+        id = #{id}
+    </update>
+
 </mapper>
 <!--Studentクラス内でSQLテーブル内の項目が変更されている場合、ASを使ってStudentクラス内の名称を適用しなければ
 サーバーエラーが発生する-->

@@ -136,21 +136,11 @@ public interface StudentRepository {
     /*受講生を新規登録する。
     *IDに関しては自動採番を行う。
     *@param student 受講生*/
-    @Insert("""
-                INSERT INTO students (name, furigana, nickname, email,
-                region, age, gender, remark, isDeleted)
-                VALUES (#{studentName}, #{furigana}, #{nickname}, #{email},
-                #{region}, #{age}, #{gender}, #{remark}, false)
-            """)
-    @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudent(Student student);
 
     /*受講生コース情報を新規登録する。
     *IDに関しては自動採番を行う。
     *@param studentsCourses 受講生コース情報*/
-    @Insert("INSERT INTO students_courses(student_id, course_name, start_date, end_date)" +
-            "VALUES(#{studentId}, #{courseName}, #{startDate}, #{endDate})")
-    @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudentCourse(StudentsCourse studentsCourse);
 
     @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
@@ -163,27 +153,10 @@ public interface StudentRepository {
 
     /*受講生情報を更新する。
     * @param student 受講生*/
-    @Update("""
-                UPDATE students
-                SET
-                    name = #{studentName},
-                    furigana = #{furigana},
-                    nickname = #{nickname},
-                    email = #{email},
-                    region = #{region},
-                    age = #{age},
-                    gender = #{gender},
-                    remark = #{remark},
-                    isdeleted = COALESCE(#{isDeleted}, false)
-                WHERE
-                    id = #{id}
-            """)
-        /*SETとWHEREをつけ、更にエイリアスをつける場合はこのように見やすくするといい*/
     int updateStudent(Student student);
 
     /*受講生コース情報のコース名を更新する。
     * @param studentCourse 受講生コース情報*/
-    @Update("UPDATE students_courses SET course_name = #{courseName}, start_date = #{startDate}, end_date = #{endDate} WHERE id = #{id}")
     int updateStudentCourse(StudentsCourse studentsCourse);
 
     @Insert("""
