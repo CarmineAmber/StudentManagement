@@ -1,9 +1,13 @@
 package student.management.StudentManagement.Controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
@@ -14,6 +18,7 @@ import java.util.List;
 
 /*受講生の検索や登録、更新などを行うREST APIとして受け付けるController*/
 
+@Validated
 @RestController
 public class StudentController {
 
@@ -52,7 +57,8 @@ public class StudentController {
     *@param studentDetail 受講生詳細
     *@return 実行結果*/
     @PostMapping("/registerStudent")
-    public ResponseEntity<StudentDetail> registerStudent(@RequestBody StudentDetail studentDetail) {
+    public ResponseEntity<StudentDetail> registerStudent(@RequestBody
+        @Valid StudentDetail studentDetail) {
         try {
             StudentDetail registeredDetail = service.registerStudent(studentDetail);
             return ResponseEntity.ok(registeredDetail);
@@ -69,10 +75,11 @@ public class StudentController {
     * @param id 受講生ID
     * @return 受講生*/
     @GetMapping("/student/{id}")
-    public StudentDetail getStudent(@PathVariable String id) {
+    public StudentDetail getStudent(@PathVariable @Size(min=1,max=3)  String id) {
         Long studentId = Long.valueOf(id);
         return service.searchStudent(studentId);
     }
+    /*@Sizeとは、文字数を制限するということ。つまりこの構文では１桁から３桁までの数字に制限する*/
 
     /*受講生更新。
     * @return 受講生とコース情報*/

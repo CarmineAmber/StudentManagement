@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="student.management.StudentManagement.repository.StudentRepository">
+
     <!--受講生の全件検索-->
     <select id="search" resultType="student.management.StudentManagement.data.Student">
-        SELECT *
+        SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
         FROM students
     </select>
 
     <!--受講生の単一検索-->
     <select id="searchStudent" resultType="student.management.StudentManagement.data.Student">
-        SELECT *
+        SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
         FROM students
         WHERE id = #{id}
     </select>
+
 </mapper>
+<!--Studentクラス内でSQLテーブル内の項目が変更されている場合、ASを使ってStudentクラス内の名称を適用しなければ
+サーバーエラーが発生する-->
