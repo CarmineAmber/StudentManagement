@@ -6,15 +6,21 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import student.management.StudentManagement.Validation.ValidationGroups;
+import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.exception.StudentNotFoundException;
 import student.management.StudentManagement.exception.TestException;
+import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
@@ -27,6 +33,7 @@ import java.util.List;
 public class StudentController {
 
     private StudentService service;
+    private StudentRepository repository;
 
     @Autowired
     public StudentController(StudentService service) {
@@ -41,10 +48,10 @@ public class StudentController {
     this.converter = converterはStudentServiceとStudentConverterをこのクラスに紐づけている。*/
 
     /*受講生詳細の一覧検索機能。
-    * 全件検索を行うため、条件指定は行わない。
-    * @return 受講生詳細一覧（全件検索）*/
+     * 全件検索を行うため、条件指定は行わない。
+     * @return 受講生詳細一覧（全件検索）*/
     @GetMapping("/studentList")
-    public List<StudentDetail> getStudentList(){
+    public List<StudentDetail> getStudentList() {
         List<StudentDetail> studentDetails = service.searchStudentList();
         studentDetails.forEach(detail -> System.out.println("Response Name: " + detail.getStudent().getStudentName()));
         return service.searchStudentList();
@@ -57,50 +64,50 @@ public class StudentController {
      * 簡単に利用できる。また、BindingResultを利用してエラーを簡単に処理できる。*/
     /*スペルミスに注意（updateStudentではない）*/
 
-    /*受講生詳細のの登録を行う。
-    *@param studentDetail 受講生詳細
-    *@return 実行結果*/
+    /*受講生詳細の登録を行う。
+     *@param studentDetail 受講生詳細
+     *@return 実行結果*/
     @PostMapping("/registerStudent")
-    public ResponseEntity<StudentDetail> registerStudent(@RequestBody
-        @Valid StudentDetail studentDetail) {
+    public ResponseEntity<StudentDetail> registerStudent(@RequestBody  @Validated(ValidationGroups.Create.class)StudentDetail studentDetail) {
         try {
             StudentDetail registeredDetail = service.registerStudent(studentDetail);
             return ResponseEntity.ok(registeredDetail);
         } catch (IllegalStateException e) {
+            // ログ出力して詳細なエラーメッセージを確認
+            e.printStackTrace();
             return ResponseEntity.status(400).body(null);
         } catch (Exception e) {
+            // エラーの詳細をログに記録
+            e.printStackTrace();
             return ResponseEntity.status(500).body(null);
         }
     }
     /*public ResponseEntity<String>とするとnullになるので注意すること*/
 
     /*受講生詳細の検索。
-    * IDに紐づく任意の受講生の情報を取得する。
-    * @param id 受講生ID
-    * @return 受講生*/
+     * IDに紐づく任意の受講生の情報を取得する。
+     * @param id 受講生ID
+     * @return 受講生*/
     @GetMapping("/student/{id}")
     public StudentDetail getStudent(@PathVariable String id) {
-        if (!id.matches("^\\d+$")) {
+        if ( !id.matches("^\\d+$") ) {
             throw new TestException("IDは半角数字で入力して下さい。");
         }
 
         Long studentId = Long.valueOf(id);
         StudentDetail studentDetail = service.searchStudent(studentId);
 
-        if (studentDetail == null || studentDetail.getStudent() == null) {
+        if ( studentDetail == null || studentDetail.getStudent() == null ) {
             throw new StudentNotFoundException("該当のデータが存在しません。");
         }
 
         return studentDetail;
     }
-
-
-
     /*@Sizeとは、文字数を制限するということ。つまりこの構文では１桁から３桁までの数字に制限する*/
     /*regexpは正規表現を行うということ*/
 
     /*受講生更新。
-    * @return 受講生とコース情報*/
+     * @return 受講生とコース情報*/
     @PostMapping("/student/{id}")
     public ResponseEntity<String> updateStudentWithCourses(@RequestBody StudentDetail studentDetail) {
         try {
@@ -141,11 +148,17 @@ public class StudentController {
     }
 
     /*受講生詳細の更新を行う。キャンセルフラグの更新もここで行う（論理削除）。
-    * @param studentDetail 受講生詳細
-    * @return 実行結果*/
+     * @param studentDetail 受講生詳細
+     * @return 実行結果*/
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
+    }
+
     @PutMapping("/updateStudents")
-    public ResponseEntity<String> updateStudent(@RequestBody StudentDetail studentDetail) throws TestException {
-        // Service層で学生情報とコース情報を同時に更新
+    public ResponseEntity<String> updateStudent(
+            @RequestBody @Validated(ValidationGroups.Update.class) StudentDetail studentDetail) {
         service.updateStudentWithCourses(studentDetail);
         return ResponseEntity.ok("受講生の更新に成功しました。");
     }

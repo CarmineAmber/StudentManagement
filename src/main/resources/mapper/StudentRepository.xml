@@ -16,8 +16,8 @@
     </select>
 
     <insert id="registerStudent" parameterType="student.management.StudentManagement.data.Student" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark, isdeleted)
-        VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark}, false)
+        INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark)
+        VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark})
     </insert>
 
     <insert id="registerStudentCourse" parameterType="student.management.StudentManagement.data.StudentsCourse" useGeneratedKeys="true" keyProperty="id">

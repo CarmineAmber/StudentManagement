@@ -3,6 +3,7 @@ package student.management.StudentManagement.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,6 +12,7 @@ import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
+import student.management.StudentManagement.exception.StudentUpdateException;
 import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.repository.StudentRepository;
 
@@ -124,31 +126,31 @@ public class StudentService {
         repository.registerStudent(student);
 
         // データベースで生成されたIDを取得
-        Integer generatedId = student.getId();
+        Integer generatedId = student.getId();  // ← String型ではなくInteger型で取得
 
-        if ( generatedId == null ) {
+        if (generatedId == null) {
             throw new IllegalStateException("Student ID was not generated after registration.");
         }
 
-        // 登録するコース情報を設定。forEachストリームにすることで、一括したリピート処理を行える
+        // 受講コース情報を登録
         studentDetail.getStudentCourseList().forEach(studentsCourses -> {
             initStudentsCourses(studentsCourses, generatedId);
             repository.registerStudentCourse(studentsCourses);
         });
 
-        // studentDetail を返す
         return studentDetail;
     }
 
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報
      *@param student 受講生*/
-    private void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
-        studentCourse.setStudentId(generatedId);
+    public void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
+        studentCourse.setStudentId(generatedId);  // そのまま Integer をセット
         LocalDate now = LocalDate.now();
         studentCourse.setStartDate(now);
         studentCourse.setEndDate(now.plusYears(1));
     }
+
 
     public Student findStudentById(Long id) {
         return repository.findStudentById(id); // Repository に対応するメソッドを追加する
@@ -198,34 +200,55 @@ public class StudentService {
     }
 
     @Transactional
-    public void updateStudentWithCourses(StudentDetail studentDetail) throws TestException {
-        if (studentDetail == null || studentDetail.getStudent() == null) {
-            throw new TestException("リクエストデータが不正です。");
+    public void updateStudentWithCourses(@Valid StudentDetail studentDetail) {
+        // 必須項目が空でないかチェック（Student部分）
+        if (studentDetail.getStudent() == null) {
+            throw new IllegalArgumentException("Student object cannot be null.");
         }
 
-        Long studentId = studentDetail.getStudent().getId().longValue();
-
-        // 学生が存在しない場合のチェック
-        if (repository.searchStudent(studentId) == null) {
-            throw new TestException("指定された学生が存在しません。");
+        // 学生情報のバリデーション
+        if (studentDetail.getStudent().getStudentName() == null || studentDetail.getStudent().getStudentName().isEmpty()) {
+            throw new StudentUpdateException("名前は必須です。");
+        }
+        if (studentDetail.getStudent().getNickname() == null || studentDetail.getStudent().getNickname().isEmpty()) {
+            throw new StudentUpdateException("ニックネームは必須です。");
+        }
+        if (studentDetail.getStudent().getEmail() == null || studentDetail.getStudent().getEmail().isEmpty()) {
+            throw new StudentUpdateException("メールアドレスは必須です。");
         }
 
-        // 受講生情報を更新
-        repository.updateStudent(studentDetail.getStudent());
-
-        // 受講生コース情報を更新
-        for (StudentsCourse course : studentDetail.getStudentCourseList()) {
-            repository.updateStudentCourse(course);
-            /*正しくない文字を入力した際のエラー処理も追加すること！*/
+        // 他のフィールドも同様にチェック
+        if (studentDetail.getStudent().getRegion() == null || studentDetail.getStudent().getRegion().isEmpty()) {
+            throw new StudentUpdateException("地域は必須です。");
         }
+
+        // 更新処理（学生情報の更新）
+        int updatedRows = repository.updateStudent(studentDetail.getStudent());
+        if (updatedRows == 0) {
+            throw new IllegalStateException("Failed to update student. Student with ID "
+                    + studentDetail.getStudent().getId() + " not found.");
+        }
+
+        // 受講コースの更新
+        studentDetail.getStudentCourseList().forEach(studentsCourses -> {
+            if (studentsCourses.getCourseName() == null || studentsCourses.getCourseName().isEmpty()) {
+                throw new StudentUpdateException("コース名は必須です。");
+            }
+            // 受講コース情報を更新
+            studentsCourses.setStudentId(studentDetail.getStudent().getId());  // 学生IDをセット
+            repository.updateStudentCourse(studentsCourses);
+        });
+
+        // 更新完了のログ（デバッグ用）
+        System.out.println("Student updated: " + studentDetail.getStudent().getId());
     }
+}
 
 
     /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
      * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
      * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を
      * 行わない場合、読み取り専用モードにも設定できる*/
-}
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
         repositoryを呼び出せる。これを行うことで上書きが容易になる。
