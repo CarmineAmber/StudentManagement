@@ -24,20 +24,21 @@ repositories {/*外部ライブラリを何処からダウンロードしてき�
 	mavenCentral()
 }
 
-sourceSets {
-	main {
-		resources {
-			srcDirs = ['src/main/resources']
-			include 'mapper/**/*.xml'
-		}
+processResources {
+	duplicatesStrategy = DuplicatesStrategy.INCLUDE // 🔥 これを追加
+	from('src/main/resources') {
+		include '**/*.xml' // XML ファイルを含める
 	}
 }
+/**/
 
 dependencies {/*依存関係及びスターターの編集*/
 	/*Spring Boot*/
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	/*Thymeleaf*/
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	/*Validation*/
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
 	/*Apache commons-Lang：便利機能やユーティリティの機能を持つ。*/
 	implementation 'org.apache.commons:commons-lang3:3.17.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -60,7 +61,6 @@ dependencies {/*依存関係及びスターターの編集*/
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web' // 必要に応じて追加
 	implementation 'com.h2database:h2'
-
 }
 
 tasks.named('test') {

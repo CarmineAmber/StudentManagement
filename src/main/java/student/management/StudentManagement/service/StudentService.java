@@ -11,6 +11,7 @@ import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
+import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.repository.StudentRepository;
 
 import java.io.BufferedReader;
@@ -197,21 +198,29 @@ public class StudentService {
     }
 
     @Transactional
-    public void updateStudentWithCourses(StudentDetail studentDetail) {
-        // 学生情報の更新
-        int updatedRows = repository.updateStudent(studentDetail.getStudent());
-        if ( updatedRows == 0 ) {
-            throw new IllegalStateException("学生情報の更新に失敗しました。該当する学生が見つかりません。");
+    public void updateStudentWithCourses(StudentDetail studentDetail) throws TestException {
+        if (studentDetail == null || studentDetail.getStudent() == null) {
+            throw new TestException("リクエストデータが不正です。");
         }
 
-        // コース情報の更新または挿入
-        for (StudentsCourse course : Optional.ofNullable(studentDetail.getStudentCourseList()).orElse(Collections.emptyList())) {
-            int updatedCourseRows = repository.updateStudentCourse(course);
-            if ( updatedCourseRows == 0 ) {
-                repository.insertStudentsCourses(course); // 新規挿入
-            }
+        Long studentId = studentDetail.getStudent().getId().longValue();
+
+        // 学生が存在しない場合のチェック
+        if (repository.searchStudent(studentId) == null) {
+            throw new TestException("指定された学生が存在しません。");
+        }
+
+        // 受講生情報を更新
+        repository.updateStudent(studentDetail.getStudent());
+
+        // 受講生コース情報を更新
+        for (StudentsCourse course : studentDetail.getStudentCourseList()) {
+            repository.updateStudentCourse(course);
+            /*正しくない文字を入力した際のエラー処理も追加すること！*/
         }
     }
+
+
     /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
      * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
      * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を

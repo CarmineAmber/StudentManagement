@@ -1,12 +1,20 @@
 package student.management.StudentManagement.Controller;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.ui.Model;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
+import student.management.StudentManagement.exception.StudentNotFoundException;
+import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.service.StudentService;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
@@ -14,6 +22,7 @@ import java.util.List;
 
 /*受講生の検索や登録、更新などを行うREST APIとして受け付けるController*/
 
+@Validated
 @RestController
 public class StudentController {
 
@@ -35,7 +44,7 @@ public class StudentController {
     * 全件検索を行うため、条件指定は行わない。
     * @return 受講生詳細一覧（全件検索）*/
     @GetMapping("/studentList")
-    public List<StudentDetail> getStudentList() {
+    public List<StudentDetail> getStudentList(){
         List<StudentDetail> studentDetails = service.searchStudentList();
         studentDetails.forEach(detail -> System.out.println("Response Name: " + detail.getStudent().getStudentName()));
         return service.searchStudentList();
@@ -52,7 +61,8 @@ public class StudentController {
     *@param studentDetail 受講生詳細
     *@return 実行結果*/
     @PostMapping("/registerStudent")
-    public ResponseEntity<StudentDetail> registerStudent(@RequestBody StudentDetail studentDetail) {
+    public ResponseEntity<StudentDetail> registerStudent(@RequestBody
+        @Valid StudentDetail studentDetail) {
         try {
             StudentDetail registeredDetail = service.registerStudent(studentDetail);
             return ResponseEntity.ok(registeredDetail);
@@ -70,9 +80,24 @@ public class StudentController {
     * @return 受講生*/
     @GetMapping("/student/{id}")
     public StudentDetail getStudent(@PathVariable String id) {
+        if (!id.matches("^\\d+$")) {
+            throw new TestException("IDは半角数字で入力して下さい。");
+        }
+
         Long studentId = Long.valueOf(id);
-        return service.searchStudent(studentId);
+        StudentDetail studentDetail = service.searchStudent(studentId);
+
+        if (studentDetail == null || studentDetail.getStudent() == null) {
+            throw new StudentNotFoundException("該当のデータが存在しません。");
+        }
+
+        return studentDetail;
     }
+
+
+
+    /*@Sizeとは、文字数を制限するということ。つまりこの構文では１桁から３桁までの数字に制限する*/
+    /*regexpは正規表現を行うということ*/
 
     /*受講生更新。
     * @return 受講生とコース情報*/
@@ -119,23 +144,11 @@ public class StudentController {
     * @param studentDetail 受講生詳細
     * @return 実行結果*/
     @PutMapping("/updateStudents")
-    public ResponseEntity<String> updateStudent(@RequestBody StudentDetail studentDetail) {
-        try {
-            // Service層で学生情報とコース情報を同時に更新
-            service.updateStudentWithCourses(studentDetail);
-            return ResponseEntity.ok("受講生の更新に成功しました。");
-        } catch (IllegalStateException e) {
-            // 学生が存在しない場合のエラーハンドリング
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
-        } catch (IllegalArgumentException e) {
-            // リクエストデータが不正な場合のエラーハンドリング
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            // その他のエラーハンドリング
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("受講生の更新に失敗しました。");
-        }
+    public ResponseEntity<String> updateStudent(@RequestBody StudentDetail studentDetail) throws TestException {
+        // Service層で学生情報とコース情報を同時に更新
+        service.updateStudentWithCourses(studentDetail);
+        return ResponseEntity.ok("受講生の更新に成功しました。");
     }
-
 }
 /*@RequestParamとは、ブラウザからのリクエストの値（パラメータ）を取得することのできるアノテーション。
  * Spring bootにおいて基礎的なアノテーションの１つ。このコードでは、@RequestParamにStudentWithCoursesの
