@@ -1,5 +1,6 @@
 package student.management.StudentManagement.data;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import student.management.StudentManagement.Validation.ValidationGroups;
  * クラス宣言の前にimport lombok.Getter,import lombok.Setter,
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
 
+@Schema(description = "受講生")
 @Getter
 @Setter
 public class Student {
@@ -20,6 +22,8 @@ public class Student {
     * 確認する用途に使われる（主にIDや数量のバリデーション）*/
     private Integer id;
 
+    /*@NotNullと@NotBlankを使用することで、nullと""の両方をバリデーションする。
+    * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
     @NotNull(message = "エラー: 名前が入力されていません。")
     @NotBlank(message = "エラー: 名前が入力されていません。")
     private String studentName;

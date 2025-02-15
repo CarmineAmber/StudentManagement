@@ -1,5 +1,6 @@
 package student.management.StudentManagement.data;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,7 @@ import student.management.StudentManagement.Validation.ValidationGroups;
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
 
 import java.time.LocalDate;
+@Schema(description = "受講生コース情報")
 @Getter
 @Setter
 public class StudentsCourse {
