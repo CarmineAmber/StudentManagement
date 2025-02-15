@@ -20,19 +20,24 @@ public class Student {
     * 確認する用途に使われる（主にIDや数量のバリデーション）*/
     private Integer id;
 
+    @NotNull(message = "エラー: 名前が入力されていません。")
     @NotBlank(message = "エラー: 名前が入力されていません。")
     private String studentName;
 
+    @NotNull(message = "エラー: フリガナが入力されていません。")
     @NotBlank(message = "エラー: フリガナが入力されていません。")
     private String furigana;
 
+    @NotNull(message = "エラー: ニックネームが入力されていません。")
     @NotBlank(message = "エラー: ニックネームが入力されていません。")
     private String nickname;
 
+    @NotNull(message = "エラー: メールアドレスが入力されていません。")
     @NotBlank(message = "エラー: メールアドレスが入力されていません。")
     @Email(message = "エラー: 正しいメールアドレスを入力してください。")
     private String email;
 
+    @NotNull(message = "エラー: 地域が入力されていません。")
     @NotBlank(message = "エラー: 地域が入力されていません。")
     private String region;
 
@@ -40,6 +45,7 @@ public class Student {
     @Max(120)
     private Integer age;
 
+    @NotNull(message = "エラー: 性別が入力されていません。")
     @NotBlank(message = "エラー: 性別が入力されていません。")
     private String gender;
 

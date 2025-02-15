@@ -22,6 +22,7 @@ import student.management.StudentManagement.exception.StudentNotFoundException;
 import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
+import java.util.Objects;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
 import java.util.List;
@@ -68,19 +69,9 @@ public class StudentController {
      *@param studentDetail 受講生詳細
      *@return 実行結果*/
     @PostMapping("/registerStudent")
-    public ResponseEntity<StudentDetail> registerStudent(@RequestBody  @Validated(ValidationGroups.Create.class)StudentDetail studentDetail) {
-        try {
-            StudentDetail registeredDetail = service.registerStudent(studentDetail);
-            return ResponseEntity.ok(registeredDetail);
-        } catch (IllegalStateException e) {
-            // ログ出力して詳細なエラーメッセージを確認
-            e.printStackTrace();
-            return ResponseEntity.status(400).body(null);
-        } catch (Exception e) {
-            // エラーの詳細をログに記録
-            e.printStackTrace();
-            return ResponseEntity.status(500).body(null);
-        }
+    public ResponseEntity<?> registerStudent(@Valid @RequestBody StudentDetail studentDetail) {
+        StudentDetail savedStudent = service.registerStudent(studentDetail);
+        return ResponseEntity.ok(savedStudent);
     }
     /*public ResponseEntity<String>とするとnullになるので注意すること*/
 
@@ -157,10 +148,9 @@ public class StudentController {
     }
 
     @PutMapping("/updateStudents")
-    public ResponseEntity<String> updateStudent(
-            @RequestBody @Validated(ValidationGroups.Update.class) StudentDetail studentDetail) {
+    public ResponseEntity<?> updateStudent(@Valid @RequestBody StudentDetail studentDetail) {
         service.updateStudentWithCourses(studentDetail);
-        return ResponseEntity.ok("受講生の更新に成功しました。");
+        return ResponseEntity.ok("更新成功");
     }
 }
 /*@RequestParamとは、ブラウザからのリクエストの値（パラメータ）を取得することのできるアノテーション。

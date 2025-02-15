@@ -18,7 +18,7 @@ public class StudentDetail {
     private Student student;
 
     @Valid
-    private List<StudentsCourse> studentCourseList= new ArrayList<>(); ;
+    private List<@Valid StudentsCourse> studentCourseList= new ArrayList<>(); ;
     /*studentとstudentCoursesの２つのクラスに表記されているものを
     * 繋ぎ合わせ、StudentDetailを作っている。
     * 尚、リストがnullになることによるサーバーエラーを防ぐために

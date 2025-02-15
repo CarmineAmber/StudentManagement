@@ -21,7 +21,8 @@ public class StudentsCourse {
     @Min(value = 1, message = "IDは1以上である必要があります。")
     private Integer studentId;
 
-    @NotBlank(groups = ValidationGroups.Create.class, message = "コース名は必須です。")
+    @NotBlank(message = "コース名は必須です。")
+    @NotNull(message = "コース名は必須です。")
     private String courseName;
 
     private LocalDate startDate;
