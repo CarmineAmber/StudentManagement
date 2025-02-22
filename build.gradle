@@ -47,6 +47,7 @@ dependencies {/*依存関係及びスターターの編集*/
 	/*Apache commons-Lang：便利機能やユーティリティの機能を持つ。*/
 	implementation 'org.apache.commons:commons-lang3:3.17.0'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
+
 	/*Lombok*/
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
