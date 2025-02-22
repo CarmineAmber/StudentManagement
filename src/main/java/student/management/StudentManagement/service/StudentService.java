@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.validation.annotation.Validated;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
@@ -120,7 +121,7 @@ public class StudentService {
      *@param studentDetail 受講生詳細
      *@return 登録情報を付与した受講生詳細*/
     @Transactional
-    public StudentDetail registerStudent(StudentDetail studentDetail) {
+    public StudentDetail registerStudent(@Valid StudentDetail studentDetail) {
         // 学生情報を登録
         Student student = studentDetail.getStudent();
         repository.registerStudent(student);
@@ -140,6 +141,7 @@ public class StudentService {
 
         return studentDetail;
     }
+
 
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報
@@ -199,47 +201,20 @@ public class StudentService {
         }
     }
 
+    @Validated
     @Transactional
     public void updateStudentWithCourses(@Valid StudentDetail studentDetail) {
-        // 必須項目が空でないかチェック（Student部分）
-        if (studentDetail.getStudent() == null) {
-            throw new IllegalArgumentException("Student object cannot be null.");
-        }
-
-        // 学生情報のバリデーション
-        if (studentDetail.getStudent().getStudentName() == null || studentDetail.getStudent().getStudentName().isEmpty()) {
-            throw new StudentUpdateException("名前は必須です。");
-        }
-        if (studentDetail.getStudent().getNickname() == null || studentDetail.getStudent().getNickname().isEmpty()) {
-            throw new StudentUpdateException("ニックネームは必須です。");
-        }
-        if (studentDetail.getStudent().getEmail() == null || studentDetail.getStudent().getEmail().isEmpty()) {
-            throw new StudentUpdateException("メールアドレスは必須です。");
-        }
-
-        // 他のフィールドも同様にチェック
-        if (studentDetail.getStudent().getRegion() == null || studentDetail.getStudent().getRegion().isEmpty()) {
-            throw new StudentUpdateException("地域は必須です。");
-        }
-
-        // 更新処理（学生情報の更新）
         int updatedRows = repository.updateStudent(studentDetail.getStudent());
         if (updatedRows == 0) {
             throw new IllegalStateException("Failed to update student. Student with ID "
                     + studentDetail.getStudent().getId() + " not found.");
         }
 
-        // 受講コースの更新
         studentDetail.getStudentCourseList().forEach(studentsCourses -> {
-            if (studentsCourses.getCourseName() == null || studentsCourses.getCourseName().isEmpty()) {
-                throw new StudentUpdateException("コース名は必須です。");
-            }
-            // 受講コース情報を更新
-            studentsCourses.setStudentId(studentDetail.getStudent().getId());  // 学生IDをセット
+            studentsCourses.setStudentId(studentDetail.getStudent().getId());
             repository.updateStudentCourse(studentsCourses);
         });
 
-        // 更新完了のログ（デバッグ用）
         System.out.println("Student updated: " + studentDetail.getStudent().getId());
     }
 }
