@@ -19,10 +19,10 @@ import java.util.List;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-/*MockitoExtension:テストコード内にインスタンスを自動で生成する。
-* 返り値も自動で設定できる*/
+        /*MockitoExtension:テストコード内にインスタンスを自動で生成する。
+         * 返り値も自動で設定できる*/
 class StudentServiceTest {
-/*testのvoidは日本語で記述すること*/
+    /*testのvoidは日本語で記述すること*/
 
     @Mock
     private StudentRepository repository;
@@ -33,15 +33,15 @@ class StudentServiceTest {
     private StudentService sut;
 
     @BeforeEach
-    void before(){
-        sut = new StudentService(repository,converter);
+    void before() {
+        sut = new StudentService(repository, converter);
     }
     /*BeforeEachは、コードの前に書くことでTestクラスにおける共通事項を定める。
-    * つまり、このStudentServiceTestクラスにおいてsut =
-    * new StudentService(repository,converter)であると定めている*/
+     * つまり、このStudentServiceTestクラスにおいてsut =
+     * new StudentService(repository,converter)であると定めている*/
 
     @Test
-    void 受講生詳細の一覧検索_リポジトリとコンバーターの処理が適切に呼び出せていること(){
+    void 受講生詳細の一覧検索_リポジトリとコンバーターの処理が適切に呼び出せていること() {
 
         /*事前準備*/
         List<Student> studentList = new ArrayList<>();
@@ -53,12 +53,12 @@ class StudentServiceTest {
         sut.searchStudentList();
 
         /*検証*/
-        verify(repository,times(1)).search();
-        verify(repository,times(1)).searchAllCoursesList();
-        verify(converter,times(2)).convertStudentDetails(studentList,studentsCourseList);
+        verify(repository, times(1)).search();
+        verify(repository, times(1)).searchAllCoursesList();
+        verify(converter, times(2)).convertStudentDetails(studentList, studentsCourseList);
         /*searchを１回、searchAllCoursesListを１回、convertStudentDetailsを２回行うということ。
-        * convertStudentDetailsはstudentListとstudentsCourseListを所持しているため、
-        * ２回行う必要がある。*/
+         * convertStudentDetailsはstudentListとstudentsCourseListを所持しているため、
+         * ２回行う必要がある。*/
     }
 
     @Test
@@ -87,7 +87,7 @@ class StudentServiceTest {
         verify(repository, times(1)).registerStudent(any(Student.class));
         verify(repository, times(studentsCoursesList.size())).registerStudentCourse(any(StudentsCourse.class));
         /*registerStudentが１回呼ばれ、registerStudentCourseがstudentsCoursesListがサイズ回数
-        * （どれだけの数が現在リストの中にあるか）呼ばれたことを確認する。*/
+         * （どれだけの数が現在リストの中にあるか）呼ばれたことを確認する。*/
     }
 
     @Test
@@ -115,7 +115,7 @@ class StudentServiceTest {
 
         Assertions.assertThrows(IllegalStateException.class, () -> sut.updateStudent(studentDetail));
         /*Assertions.assertThrows(IllegalStateException.class, () -> sut.updateStudent(studentDetail))とは、
-        * 例外のスローを擬似的に行うということを検証している*/
+         * 例外のスローを擬似的に行うということを検証している*/
     }
 
     @Test

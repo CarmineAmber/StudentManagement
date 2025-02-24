@@ -201,7 +201,7 @@ public class StudentService {
     @Transactional
     public void updateStudentWithCourses(@Valid StudentDetail studentDetail) {
         int updatedRows = repository.updateStudent(studentDetail.getStudent());
-        if (updatedRows == 0) {
+        if ( updatedRows == 0 ) {
             throw new IllegalStateException("Failed to update student. Student with ID "
                     + studentDetail.getStudent().getId() + " not found.");
         }
@@ -210,8 +210,6 @@ public class StudentService {
             studentsCourses.setStudentId(studentDetail.getStudent().getId());
             repository.updateStudentCourse(studentsCourses);
         });
-
-        System.out.println("Student updated: " + studentDetail.getStudent().getId());
     }
 }
     /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
