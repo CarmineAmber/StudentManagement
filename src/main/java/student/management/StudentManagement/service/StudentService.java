@@ -57,9 +57,9 @@ public class StudentService {
      * @return 受講生一覧（全件検索）*/
     public List<StudentDetail> searchStudentList() {
         List<Student> studentList = repository.search();
-        studentList.forEach(student -> System.out.println("Repository Output: " + student));
-        List<StudentsCourse> studentCourseList = repository.searchAllCoursesList();
 
+        List<StudentsCourse> studentCourseList = repository.searchAllCoursesList();
+        studentList.forEach(student -> System.out.println("Repository Output: " + student));
         List<StudentDetail> studentDetails = converter.convertStudentDetails(studentList, studentCourseList);
         studentDetails.forEach(detail -> System.out.println("Converted Detail: " + detail));
         return converter.convertStudentDetails(studentList, studentCourseList);
@@ -146,7 +146,7 @@ public class StudentService {
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報
      *@param student 受講生*/
-    public void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
+    private void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
         studentCourse.setStudentId(generatedId);  // そのまま Integer をセット
         LocalDate now = LocalDate.now();
         studentCourse.setStartDate(now);
@@ -190,10 +190,6 @@ public class StudentService {
             throw new IllegalArgumentException("Student object cannot be null.");
         }
 
-        // デバッグ用ログ
-        System.out.println("Updating Student: " + studentDetail.getStudent());
-        System.out.println("Student ID: " + studentDetail.getStudent().getId());
-
         int updatedRows = repository.updateStudent(studentDetail.getStudent());
         if ( updatedRows == 0 ) {
             throw new IllegalStateException("Failed to update student. Student with ID "
@@ -218,8 +214,6 @@ public class StudentService {
         System.out.println("Student updated: " + studentDetail.getStudent().getId());
     }
 }
-
-
     /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
      * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
      * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を
