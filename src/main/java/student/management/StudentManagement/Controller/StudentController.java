@@ -53,7 +53,6 @@ public class StudentController {
     @GetMapping("/studentList")
     public List<StudentDetail> getStudentList() {
         List<StudentDetail> studentDetails = service.searchStudentList();
-
         return service.searchStudentList();
     }
 

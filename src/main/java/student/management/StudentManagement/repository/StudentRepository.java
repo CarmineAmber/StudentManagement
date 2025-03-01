@@ -7,6 +7,7 @@ import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
+import java.util.Optional;
 
 /*受講生テーブルと受講生コース情報テーブル(mySQL データベース名StudentManagement)と紐づくリポジトリ*/
 
@@ -22,7 +23,6 @@ public interface StudentRepository {
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
      * @return 受講生*/
-
     Student searchStudent(Long id);
 
     /*受講生のコース情報の全件検索を行う。
@@ -145,7 +145,8 @@ public interface StudentRepository {
 
     @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
             "region, age, gender, remark FROM students WHERE id = #{id}")
-    Student findStudentById(@Param("id") Long id);
+    Optional<Student> findStudentById(@Param("id") Long id);
+
 
     @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
             "FROM students_courses WHERE student_id = #{studentId}")

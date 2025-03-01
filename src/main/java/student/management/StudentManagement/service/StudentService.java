@@ -86,6 +86,21 @@ public class StudentService {
         return repository.searchStudentsWithCourses();
     }
 
+    public StudentDetail getStudentDetail(Long studentId) {
+        Student student = repository.findStudentById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+
+        List<StudentsCourse> courses = repository.findCoursesByStudentId(studentId);
+        List<StudentDetail> details = converter.convertStudentDetails(List.of(student), courses);
+
+        if (details.isEmpty()) {
+            throw new IllegalStateException("Conversion to StudentDetail failed");
+        }
+
+        return details.get(0);
+    }
+
+
     public List<Student> fetchStudentsFromApi() {
         try {
             URL url = new URL("http://localhost:8080/studentList");
@@ -127,7 +142,7 @@ public class StudentService {
         repository.registerStudent(student);
 
         // データベースで生成されたIDを取得
-        Integer generatedId = student.getId();  // ← String型ではなくInteger型で取得
+        Integer generatedId = student.getId();  // 型を Integer に変更
 
         if (generatedId == null) {
             throw new IllegalStateException("Student ID was not generated after registration.");
@@ -135,7 +150,7 @@ public class StudentService {
 
         // 受講コース情報を登録
         studentDetail.getStudentCourseList().forEach(studentsCourses -> {
-            initStudentsCourses(studentsCourses, generatedId);
+            initStudentsCourses(studentsCourses, generatedId);  // Integer 型の ID を渡す
             repository.registerStudentCourse(studentsCourses);
         });
 
@@ -143,35 +158,15 @@ public class StudentService {
     }
 
 
+
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報
      *@param student 受講生*/
-    private void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
+    public void initStudentsCourses(StudentsCourse studentCourse, Integer generatedId) {
         studentCourse.setStudentId(generatedId);  // そのまま Integer をセット
         LocalDate now = LocalDate.now();
         studentCourse.setStartDate(now);
         studentCourse.setEndDate(now.plusYears(1));
-    }
-
-
-    public Student findStudentById(Long id) {
-        return repository.findStudentById(id); // Repository に対応するメソッドを追加する
-    }
-
-    public List<StudentsCourse> findCoursesByStudentId(Long studentId) {
-        return repository.findCoursesByStudentId(studentId); // 受講生IDに関連付けられたコースを取得
-    }
-
-    public StudentDetail getStudentDetailById(Long id) {
-        Student student = repository.findStudentById(id);
-        if ( student == null ) {
-            throw new IllegalArgumentException("Student not found with id: " + id);
-        }
-        List<StudentsCourse> courses = repository.findCoursesByStudentId(id);
-        StudentDetail detail = new StudentDetail();
-        detail.setStudent(student);
-        detail.setStudentCourseList(courses);
-        return detail;
     }
 
     public void markAsDeleted(Long studentId) {
