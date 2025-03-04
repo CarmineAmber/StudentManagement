@@ -85,20 +85,22 @@ public class StudentController {
         }
     }
 
+    @Operation(summary = "受講生検索",description = "受講生を検索する")
     @GetMapping("/student/{id}")
-    public StudentDetail getStudent(@PathVariable String id) {
-        if ( !id.matches("^\\d+$") ) {
-            throw new TestException("IDは半角数字で入力して下さい。");
+    public ResponseEntity<Object> getStudent(@PathVariable("id") String id) {
+        if (!id.matches("\\d+")) {
+            return ResponseEntity.badRequest().body("IDは半角数字で入力して下さい。");
         }
 
-        Long studentId = Long.valueOf(id);
+        Long studentId = Long.parseLong(id);
         StudentDetail studentDetail = service.searchStudent(studentId);
 
-        if ( studentDetail == null || studentDetail.getStudent() == null ) {
-            throw new StudentNotFoundException("該当のデータが存在しません。");
+        if (studentDetail == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("該当のデータが存在しません。");
         }
 
-        return studentDetail;
+        Student student = studentDetail.getStudent();
+        return ResponseEntity.ok(student);
     }
 
     @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
