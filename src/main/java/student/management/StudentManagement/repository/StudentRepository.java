@@ -1,6 +1,7 @@
 package student.management.StudentManagement.repository;
 
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Repository;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
@@ -12,17 +13,24 @@ import java.util.Optional;
 /*受講生テーブルと受講生コース情報テーブル(mySQL データベース名StudentManagement)と紐づくリポジトリ*/
 
 @Mapper
+@Repository
 public interface StudentRepository {
 
     /*受講生一覧検索機能。
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
-    List<Student> search();
+    @Select("SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted FROM students")
+    List<Student> searchAllStudents();
 
     /*受講生検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
      * @return 受講生*/
+    @Select("""
+    SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+    FROM students
+    WHERE id = #{id}
+""")
     Student searchStudent(Long id);
 
     /*受講生のコース情報の全件検索を行う。
@@ -151,6 +159,9 @@ public interface StudentRepository {
     @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
             "FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourse> findCoursesByStudentId(@Param("studentId") Long studentId);
+
+    @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
+    List<StudentsCourse> findStudentCoursesById(@Param("studentId") Long studentId);
 
     /*受講生情報を更新する。
     * @param student 受講生*/

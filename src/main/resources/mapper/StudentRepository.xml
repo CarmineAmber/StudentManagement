@@ -3,7 +3,7 @@
 <mapper namespace="student.management.StudentManagement.repository.StudentRepository">
 
     <!--受講生の全件検索-->
-    <select id="search" resultType="student.management.StudentManagement.data.Student">
+    <select id="searchAllStudents" resultType="student.management.StudentManagement.data.Student">
         SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
         FROM students
     </select>

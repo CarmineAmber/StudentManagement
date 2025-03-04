@@ -65,7 +65,7 @@ public class StudentController {
 
     @Operation(summary = "受講生登録", description = "受講生を登録する。")
     @PostMapping("/registerStudent")
-    public ResponseEntity<?> registerStudent(@Valid @RequestBody StudentDetail studentDetail) {
+    public ResponseEntity<StudentDetail> registerStudent(@Valid @RequestBody StudentDetail studentDetail) {
         StudentDetail savedStudent = service.registerStudent(studentDetail);
         return ResponseEntity.ok(savedStudent);
     }
@@ -85,11 +85,33 @@ public class StudentController {
         }
     }
 
+    @GetMapping("/student/{id}")
+    public StudentDetail getStudent(@PathVariable String id) {
+        if ( !id.matches("^\\d+$") ) {
+            throw new TestException("IDは半角数字で入力して下さい。");
+        }
+
+        Long studentId = Long.valueOf(id);
+        StudentDetail studentDetail = service.searchStudent(studentId);
+
+        if ( studentDetail == null || studentDetail.getStudent() == null ) {
+            throw new StudentNotFoundException("該当のデータが存在しません。");
+        }
+
+        return studentDetail;
+    }
+
     @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
     @PutMapping("/updateStudents")
     public ResponseEntity<?> updateStudent(@Valid @RequestBody StudentDetail studentDetail) {
         service.updateStudentWithCourses(studentDetail);
         return ResponseEntity.ok("更新成功");
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Internal Server Error: " + e.getMessage());
     }
 }
 /*@RequestParamとは、ブラウザからのリクエストの値（パラメータ）を取得することのできるアノテーション。

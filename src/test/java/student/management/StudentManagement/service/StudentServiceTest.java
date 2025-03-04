@@ -13,7 +13,6 @@ import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.repository.StudentRepository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -55,13 +54,13 @@ class StudentServiceTest {
         List<Student> studentList = new ArrayList<>();
         List<StudentsCourse> studentsCourseList = new ArrayList<>();
         /*空リストを擬似的に生成*/
-        when(repository.search()).thenReturn(studentList);
+        when(repository.searchAllStudents()).thenReturn(studentList);
         when(repository.searchAllCoursesList()).thenReturn(studentsCourseList);
 
         sut.searchStudentList();
 
         /*検証*/
-        verify(repository, times(1)).search();
+        verify(repository, times(1)).searchAllStudents();
         verify(repository, times(1)).searchAllCoursesList();
         verify(converter, times(2)).convertStudentDetails(studentList, studentsCourseList);
         /*searchを１回、searchAllCoursesListを１回、convertStudentDetailsを２回行うということ。

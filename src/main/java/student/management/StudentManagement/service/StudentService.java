@@ -13,8 +13,6 @@ import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
-import student.management.StudentManagement.exception.StudentUpdateException;
-import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.repository.StudentRepository;
 
 import java.io.BufferedReader;
@@ -23,7 +21,6 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -56,7 +53,7 @@ public class StudentService {
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
     public List<StudentDetail> searchStudentList() {
-        List<Student> studentList = repository.search();
+        List<Student> studentList = repository.searchAllStudents();
 
         List<StudentsCourse> studentCourseList = repository.searchAllCoursesList();
         studentList.forEach(student -> System.out.println("Repository Output: " + student));
@@ -93,7 +90,7 @@ public class StudentService {
         List<StudentsCourse> courses = repository.findCoursesByStudentId(studentId);
         List<StudentDetail> details = converter.convertStudentDetails(List.of(student), courses);
 
-        if (details.isEmpty()) {
+        if ( details.isEmpty() ) {
             throw new IllegalStateException("Conversion to StudentDetail failed");
         }
 
@@ -137,27 +134,53 @@ public class StudentService {
      *@return 登録情報を付与した受講生詳細*/
     @Transactional
     public StudentDetail registerStudent(@Valid StudentDetail studentDetail) {
-        // 学生情報を登録
-        Student student = studentDetail.getStudent();
-        repository.registerStudent(student);
+        try {
+            // 引数が null でないか確認
+            if ( studentDetail == null || studentDetail.getStudent() == null ) {
+                throw new IllegalArgumentException("StudentDetail or Student cannot be null.");
+            }
 
-        // データベースで生成されたIDを取得
-        Integer generatedId = student.getId();  // 型を Integer に変更
+            // 学生情報を登録
+            Student student = studentDetail.getStudent();
+            repository.registerStudent(student);
 
-        if (generatedId == null) {
-            throw new IllegalStateException("Student ID was not generated after registration.");
+            // ID の生成を確認
+            Integer generatedId = student.getId();
+            if ( generatedId == null ) {
+                throw new IllegalStateException("Student ID was not generated after registration.");
+            }
+
+            // `Integer` → `Long` に変換
+            Long generatedIdLong = generatedId.longValue();
+
+            // 受講コース情報の登録
+            if ( studentDetail.getStudentCourseList() != null ) {
+                studentDetail.getStudentCourseList().forEach(studentsCourses -> {
+                    initStudentsCourses(studentsCourses, generatedId);
+                    repository.registerStudentCourse(studentsCourses);
+                });
+            }
+
+            // データベースから最新の Student を取得
+            Optional<Student> savedStudentOptional = repository.findStudentById(generatedIdLong);
+            if ( savedStudentOptional.isPresent() ) {
+                Student savedStudent = savedStudentOptional.get();
+                List<StudentsCourse> studentCourses = repository.findStudentCoursesById(generatedIdLong);
+                return new StudentDetail(savedStudent, studentCourses);
+            } else {
+                throw new IllegalStateException("Failed to retrieve the registered student.");
+            }
+        } catch (IllegalArgumentException e) {
+            log.error("IllegalArgumentException during registration: {}", e.getMessage(), e);
+            throw e;  // 再スローしてテストで捕える
+        } catch (IllegalStateException e) {
+            log.error("IllegalStateException during registration: {}", e.getMessage(), e);
+            throw e;  // 再スローしてテストで捕える
+        } catch (Exception e) {
+            log.error("Unexpected error occurred during student registration: {}", e.getMessage(), e);
+            throw new RuntimeException("Unexpected error during registration.", e);
         }
-
-        // 受講コース情報を登録
-        studentDetail.getStudentCourseList().forEach(studentsCourses -> {
-            initStudentsCourses(studentsCourses, generatedId);  // Integer 型の ID を渡す
-            repository.registerStudentCourse(studentsCourses);
-        });
-
-        return studentDetail;
     }
-
-
 
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報
@@ -207,10 +230,10 @@ public class StudentService {
         });
     }
 }
-    /*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
-     * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
-     * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を
-     * 行わない場合、読み取り専用モードにも設定できる*/
+/*@Transactionalをメソッドやクラスに付与すると、その範囲内でのデータベース操作がトランザクションとして
+ * 扱われる。メソッドの実行開始時にトランザクションが行われ、正常に終了するとコミットし、例外が発生すると
+ * 自動的にロールバックする。このロールバック対象の例外を自由にカスタマイズすることが可能。データの変更を
+ * 行わない場合、読み取り専用モードにも設定できる*/
         /*本来はnewが入らないとインスタンスとして機能しないが、SpringBootの@Serviceで
         インスタンスとして呼び出すことが可能。更にAutowiredでStudentManagementApplicationの
         repositoryを呼び出せる。これを行うことで上書きが容易になる。
