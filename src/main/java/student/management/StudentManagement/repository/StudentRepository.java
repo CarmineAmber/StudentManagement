@@ -144,11 +144,15 @@ public interface StudentRepository {
     /*受講生を新規登録する。
     *IDに関しては自動採番を行う。
     *@param student 受講生*/
+    @Insert("INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark) " +
+            "VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark})")
     void registerStudent(Student student);
 
     /*受講生コース情報を新規登録する。
     *IDに関しては自動採番を行う。
     *@param studentsCourses 受講生コース情報*/
+    @Insert("INSERT INTO students_courses (student_id, course_name, start_date, end_date) " +
+            "VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})")
     void registerStudentCourse(StudentsCourse studentsCourse);
 
     @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +

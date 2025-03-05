@@ -62,30 +62,34 @@ class StudentControllerTest {
 
     @Test
     void 受講生詳細の受講生で適切な値を入力した時に入力チェックに異常が発生しないこと(){
-        Student student = new Student();
-        student.setId(1);
-        student.setStudentName("Yuki");
-        student.setFurigana("ユキ");
-        student.setNickname("Yuki");
-        student.setEmail("yuki@example.com");
-        student.setRegion("Saitama");
-        student.setGender("Female");
+        Student student = new Student(
+                1,
+                "Yuki",
+                "ユキ",
+                "Yuki",
+                "yuki@example.com",
+                "Saitama",
+                26,
+                "Female"
+        );
 
         Set<ConstraintViolation<Student>> violations = validator.validate(student);
 
-        assertThat(violations.size()).isEqualTo(0);
+        assertThat(violations).isEmpty();
     }
 
     @Test
     void 受講生詳細の受講生で適切な値を入力した時に入力チェックにかかること(){
-        Student student = new Student();
-        student.setId(null);
-        student.setStudentName("Yuki");
-        student.setFurigana("ユキ");
-        student.setNickname("Yuki");
-        student.setEmail("yuki@example.com");
-        student.setRegion("Saitama");
-        student.setGender("Female");
+        Student student = new Student(
+                null,
+                "Yuki",
+                "ユキ",
+                "Yuki",
+                "yuki@example.com",
+                "Saitama",
+                26,
+                "Female"
+        );
 
         Set<ConstraintViolation<Student>> violations = validator.validate(student);
 
@@ -96,32 +100,39 @@ class StudentControllerTest {
     @Test
     void 受講生を登録した際に異常が発生しないこと() throws Exception {
         // モックデータ作成
-        Student student = new Student();
-        student.setId(1);
-        student.setStudentName("Aya");
-        student.setFurigana("アヤ");
-        student.setNickname("Aya");
-        student.setEmail("aya.example.com");
-        student.setGender("Female");
-        student.setRegion("Gunma");
-        student.setAge(17);
+        Student student = new Student(
+                1,
+                "Chloe",
+                "クロエ",
+                "Chloe",
+                "chloe@example.com",
+                "Gunma",
+                17,
+                "Female"
+        );
 
-        StudentsCourse course = new StudentsCourse();
-        course.setStudentId(1);
-        course.setCourseName("JAVA");
+        StudentsCourse studentsCourse = new StudentsCourse(
+                1,
+                "JAVA"
+        );
 
         StudentDetail studentDetail = new StudentDetail();
         studentDetail.setStudent(student);
-        studentDetail.setStudentCourseList(Collections.singletonList(course));
+        studentDetail.setStudentCourseList(Collections.singletonList(studentsCourse));  // 正しくセットされているか確認
 
-        // サービスのモック設定
+// モック設定
         when(service.searchStudent(1L)).thenReturn(studentDetail);
+        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/student/1"))
+                .andExpect(status().isOk())
+                .andReturn();  // レスポンスを取得
+
+        System.out.println("Response JSON: " + result.getResponse().getContentAsString());
 
         // APIリクエスト & 検証
         mockMvc.perform(MockMvcRequestBuilders.get("/student/1"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.student.id").value(1))
-                .andExpect(jsonPath("$.student.studentName").value("Aya"))
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.studentName").value("Chloe"))
                 .andExpect(jsonPath("$.studentCourseList[0].courseName").value("JAVA"));
     }
 
