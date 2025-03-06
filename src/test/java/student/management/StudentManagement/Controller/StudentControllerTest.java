@@ -53,15 +53,15 @@ class StudentControllerTest {
     private Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
 
     @Test
-    void 受講生詳細の一覧検索が実行できて空のリストが返ってくること()throws Exception{
+    void 受講生詳細の一覧検索が実行できて空のリストが返ってくること() throws Exception {
         mockMvc.perform(get("/studentList"))
-        .andExpect(status().isOk());
+                .andExpect(status().isOk());
         // verifyが正しく呼ばれるか確認
         verify(service, times(2)).searchStudentList();
     }
 
     @Test
-    void 受講生詳細の受講生で適切な値を入力した時に入力チェックに異常が発生しないこと(){
+    void 受講生詳細の受講生で適切な値を入力した時に入力チェックに異常が発生しないこと() {
         Student student = new Student(
                 1,
                 "Yuki",
@@ -79,7 +79,7 @@ class StudentControllerTest {
     }
 
     @Test
-    void 受講生詳細の受講生で適切な値を入力した時に入力チェックにかかること(){
+    void 受講生詳細の受講生で適切な値を入力した時に入力チェックにかかること() {
         Student student = new Student(
                 null,
                 "Yuki",
@@ -98,45 +98,6 @@ class StudentControllerTest {
     }
 
     @Test
-    void 受講生を登録した際に異常が発生しないこと() throws Exception {
-        // モックデータ作成
-        Student student = new Student(
-                1,
-                "Chloe",
-                "クロエ",
-                "Chloe",
-                "chloe@example.com",
-                "Gunma",
-                17,
-                "Female"
-        );
-
-        StudentsCourse studentsCourse = new StudentsCourse(
-                1,
-                "JAVA"
-        );
-
-        StudentDetail studentDetail = new StudentDetail();
-        studentDetail.setStudent(student);
-        studentDetail.setStudentCourseList(Collections.singletonList(studentsCourse));  // 正しくセットされているか確認
-
-// モック設定
-        when(service.searchStudent(1L)).thenReturn(studentDetail);
-        MvcResult result = mockMvc.perform(MockMvcRequestBuilders.get("/student/1"))
-                .andExpect(status().isOk())
-                .andReturn();  // レスポンスを取得
-
-        System.out.println("Response JSON: " + result.getResponse().getContentAsString());
-
-        // APIリクエスト & 検証
-        mockMvc.perform(MockMvcRequestBuilders.get("/student/1"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.studentName").value("Chloe"))
-                .andExpect(jsonPath("$.studentCourseList[0].courseName").value("JAVA"));
-    }
-
-    @Test
     void 受講生検索でIDを半角数字以外で入力した時に入力チェックにかかること() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.get("/student/abc"))
                 .andExpect(status().isBadRequest())
@@ -150,6 +111,20 @@ class StudentControllerTest {
         mockMvc.perform(MockMvcRequestBuilders.get("/student/999"))
                 .andExpect(status().isNotFound())
                 .andExpect(content().string("該当のデータが存在しません。"));
+    }
+
+    @Test
+    public void 受講生を登録した際に異常が発生しないこと() throws Exception {
+        String requestBody = "{ \"student\": {\"studentName\": \"John Doe\", \"furigana\": \"ジョン・ドウ\", \"nickname\": \"Johnny\", \"email\": \"john.doe@example.com\", \"region\": \"Tokyo\", \"age\": 20, \"gender\": \"Male\", \"remark\": \"No remarks\", \"isDeleted\": false }, \"studentCourseList\": [{ \"studentId\": 1, \"courseName\": \"JAVA\", \"startDate\": \"2025-03-01\", \"endDate\": \"2025-06-01\" }] }";
+
+        MvcResult result = mockMvc.perform(post("/registerStudent")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isOk())  // ここで 200 OK を期待
+                .andReturn();
+
+        String content = result.getResponse().getContentAsString();
+        System.out.println("Response Content: " + content);
     }
 
     @AfterEach

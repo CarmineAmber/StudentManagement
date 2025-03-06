@@ -135,8 +135,7 @@ public class StudentService {
     @Transactional
     public StudentDetail registerStudent(@Valid StudentDetail studentDetail) {
         try {
-            // 引数が null でないか確認
-            if ( studentDetail == null || studentDetail.getStudent() == null ) {
+            if (studentDetail == null || studentDetail.getStudent() == null) {
                 throw new IllegalArgumentException("StudentDetail or Student cannot be null.");
             }
 
@@ -144,17 +143,17 @@ public class StudentService {
             Student student = studentDetail.getStudent();
             repository.registerStudent(student);
 
-            // ID の生成を確認
+            // データベースで生成されたIDを取得
             Integer generatedId = student.getId();
-            if ( generatedId == null ) {
+            if (generatedId == null) {
                 throw new IllegalStateException("Student ID was not generated after registration.");
             }
 
             // `Integer` → `Long` に変換
             Long generatedIdLong = generatedId.longValue();
 
-            // 受講コース情報の登録
-            if ( studentDetail.getStudentCourseList() != null ) {
+            // 受講コース情報を登録
+            if (studentDetail.getStudentCourseList() != null) {
                 studentDetail.getStudentCourseList().forEach(studentsCourses -> {
                     initStudentsCourses(studentsCourses, generatedId);
                     repository.registerStudentCourse(studentsCourses);
@@ -163,7 +162,7 @@ public class StudentService {
 
             // データベースから最新の Student を取得
             Optional<Student> savedStudentOptional = repository.findStudentById(generatedIdLong);
-            if ( savedStudentOptional.isPresent() ) {
+            if (savedStudentOptional.isPresent()) {
                 Student savedStudent = savedStudentOptional.get();
                 List<StudentsCourse> studentCourses = repository.findStudentCoursesById(generatedIdLong);
                 return new StudentDetail(savedStudent, studentCourses);
