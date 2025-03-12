@@ -24,6 +24,10 @@ import student.management.StudentManagement.exception.StudentNotFoundException;
 import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
 import java.util.Objects;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
@@ -37,6 +41,7 @@ public class StudentController {
 
     private StudentService service;
     private StudentRepository repository;
+    private static final Logger log = LoggerFactory.getLogger(StudentController.class);
 
     @Autowired
     public StudentController(StudentService service) {
@@ -54,7 +59,7 @@ public class StudentController {
     @GetMapping("/studentList")
     public List<StudentDetail> getStudentList() {
         List<StudentDetail> studentDetails = service.searchStudentList();
-        return service.searchStudentList();
+        return studentDetails;
     }
 
     /*@ModelAttributeは一般的にHTTPのGETメソッドで使用されるが、POSTメソッドでも使用できる。
@@ -100,15 +105,23 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("該当のデータが存在しません。");
         }
 
-        Student student = studentDetail.getStudent();
-        return ResponseEntity.ok(student);
+        return ResponseEntity.ok(studentDetail); // StudentDetailを返す
     }
+
 
     @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
     @PutMapping("/updateStudents")
-    public ResponseEntity<?> updateStudent(@Valid @RequestBody StudentDetail studentDetail) {
-        service.updateStudentWithCourses(studentDetail);
-        return ResponseEntity.ok("更新成功");
+    public ResponseEntity<?> updateStudent(@RequestBody @Valid StudentDetail studentDetail) {
+        log.info("Updating student: {}", studentDetail);
+
+        if (studentDetail.getStudentCourseList() != null) {
+            for (StudentsCourse course : studentDetail.getStudentCourseList()) {
+                log.info("Course info: {}", course);
+            }
+        }
+
+        service.updateStudent(studentDetail);
+        return ResponseEntity.ok("Update successful");
     }
 
     @ExceptionHandler(Exception.class)

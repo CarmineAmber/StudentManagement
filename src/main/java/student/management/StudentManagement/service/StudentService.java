@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
@@ -21,8 +22,10 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,30 +56,47 @@ public class StudentService {
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
     public List<StudentDetail> searchStudentList() {
-        List<Student> studentList = repository.searchAllStudents();
+        List<Student> studentList = repository.searchAllStudents(); // 学生情報を取得
+        List<StudentsCourse> studentCourseList = repository.searchAllCoursesList(); // コース情報を取得
 
-        List<StudentsCourse> studentCourseList = repository.searchAllCoursesList();
-        studentList.forEach(student -> System.out.println("Repository Output: " + student));
-        List<StudentDetail> studentDetails = converter.convertStudentDetails(studentList, studentCourseList);
-        studentDetails.forEach(detail -> System.out.println("Converted Detail: " + detail));
-        return converter.convertStudentDetails(studentList, studentCourseList);
-    }
 
-    public int updateStudentsCourses(StudentsCourse studentsCourses) {
-        log.debug("Updating StudentsCourses: {}", studentsCourses);
-        return repository.updateStudentCourse(studentsCourses);
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        // 各学生に対応するコース情報をセット
+        studentList.forEach(student -> {
+            // 学生ごとのコース情報を取得
+
+            List<StudentsCourse> coursesForStudent = studentCourseList.stream()
+                    .filter(course -> course.getStudentId() != null && course.getStudentId().equals(student.getId()))
+                    .collect(Collectors.toList());
+
+            // StudentDetail にデータをセット
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student); // 学生情報をセット
+            studentDetail.setStudentCourseList(coursesForStudent); // コース情報をセット
+
+            // studentDetails リストに追加
+            studentDetails.add(studentDetail);
+        });
+
+        return studentDetails;
     }
 
     /*受講生詳細検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
      * @return 受講生詳細*/
-    public StudentDetail searchStudent(Long id) {
-        Student student = repository.searchStudent(id);
+    public StudentDetail searchStudent(Long studentId) {
+        Student student = repository.findStudentById(studentId)
+                .orElseThrow(() -> new RuntimeException("Student not found"));
 
-        // student.getId() を Long 型に変換
-        List<StudentsCourse> studentCourse = repository.searchAllCourse(Long.valueOf(student.getId()));
-        return new StudentDetail(student, studentCourse);
+        List<StudentsCourse> studentCourses = repository.findCoursesByStudentId(studentId);
+
+        StudentDetail studentDetail = new StudentDetail();
+        studentDetail.setStudent(student);
+        studentDetail.setStudentCourseList(studentCourses);  // コース情報を設定
+
+        return studentDetail;
     }
 
     public List<StudentsWithCourses> searchStudentsWithCourses() {

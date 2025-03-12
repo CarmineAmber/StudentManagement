@@ -58,12 +58,14 @@ public class GlobalExceptionHandler {
     * このアプリにおいては、StudentDetailクラスのStudent及びprivate List
     <@Valid StudentsCourse> studentCourseList= new ArrayList<>();が対象*/
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-        Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
-        return ResponseEntity.badRequest().body(errors);
+    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+
+        return ResponseEntity.badRequest().body("Validation Error: " + errorMessage);
     }
 
     /*プログラム内部で不正な引数(このアプリにおいてはidが0未満あるいは空白)が渡された際の例外処理。

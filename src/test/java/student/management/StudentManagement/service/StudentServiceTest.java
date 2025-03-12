@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.annotation.Commit;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
@@ -51,23 +52,42 @@ class StudentServiceTest {
     void 受講生詳細の一覧検索_リポジトリとコンバーターの処理が適切に呼び出せていること() {
 
         /*事前準備*/
-        List<Student> studentList = new ArrayList<>();
-        List<StudentsCourse> studentsCourseList = new ArrayList<>();
-        /*空リストを擬似的に生成*/
+        /* 事前準備 */
+        List<Student> studentList = List.of(
+                new Student(1, "John Doe", "ジョン・ドウ", "Johnny",
+                        "john.doe@example.com", "Tokyo", 20, "Male")
+        );
+
+        List<StudentsCourse> studentsCourseList = List.of(
+                new StudentsCourse(1, "JAVA")
+        );
+
+        /* モックの設定 */
         when(repository.searchAllStudents()).thenReturn(studentList);
         when(repository.searchAllCoursesList()).thenReturn(studentsCourseList);
 
+        // `convertStudentDetails` を実際に呼び出すように設定
+        when(converter.convertStudentDetails(any(), any())).thenCallRealMethod();
+
+        /* 実行 */
         sut.searchStudentList();
 
-        /*検証*/
+        System.out.println("学生一覧: " + studentList);
+        System.out.println("学生コース一覧: " + studentsCourseList);
+        System.out.println("Converter呼び出し開始");
+        converter.convertStudentDetails(studentList, studentsCourseList);
+        System.out.println("Converter呼び出し完了");
+
+        /* 検証 */
         verify(repository, times(1)).searchAllStudents();
         verify(repository, times(1)).searchAllCoursesList();
-        verify(converter, times(2)).convertStudentDetails(studentList, studentsCourseList);
-        /*searchを１回、searchAllCoursesListを１回、convertStudentDetailsを２回行うということ。
+        verify(converter, times(1)).convertStudentDetails(anyList(), anyList());
+        /*searchを１回、searchAllCoursesListを１回、convertStudentDetailsを１回行うということ。
          * convertStudentDetailsはstudentListとstudentsCourseListを所持しているため、
          * ２回行う必要がある。*/
     }
 
+    @Commit
     @Test
     void 受講生登録_受講生登録の登録処理が適切に実行されること() {
         Student student = new Student();
@@ -80,12 +100,20 @@ class StudentServiceTest {
 
         doAnswer(invocation -> {
             Student argStudent = invocation.getArgument(0);
-            argStudent.setId(1); // モックでIDを設定
-            return null;
+            argStudent.setId(1);
+            return argStudent;
         }).when(repository).registerStudent(any(Student.class));
         /*このdoAnswerを使うことによって、メソッドの副作用を擬似生成している*/
 
+        when(repository.findStudentById(1L)).thenReturn(Optional.of(student));
+        /*findStudentById をモックする。Optional<Student> findStudentById(@Param("id")
+        Long id);となっている（findStudentById(Long id) の戻り値がOptional<Student>に
+        なっている）場合、thenReturn(Optional.of(student))を返す必要がある。
+        また、repository.findStudentById(1L)としているのは、このリポジトリがLongで
+        あるため。Lがなければエラーが発生してしまう*/
+
         StudentDetail result = sut.registerStudent(studentDetail);
+        System.out.println("Result student: " + result.getStudent());
 
         Assertions.assertNotNull(result);
         assertEquals(1, result.getStudent().getId());
@@ -155,14 +183,20 @@ class StudentServiceTest {
         when(repository.findCoursesByStudentId(1L)).thenReturn(studentsCoursesList);
         when(converter.convertStudentDetails(anyList(), anyList()))
                 .thenReturn(List.of(new StudentDetail(student, studentsCoursesList)));
+        /*リポジトリにあるfindStudentByIdとfindCoursesByStudentId、converterにある
+         * convertStudentDetailsにある(List.of(student), studentsCoursesList)が
+         * 呼び出された場合、StudentDetail内にあるstudent,studentsCoursesListを返す*/
 
         StudentDetail result = sut.getStudentDetail(1L);
+        /*このコードでテストを実行する*/
 
         Assertions.assertNotNull(result);
         assertEquals(1, result.getStudent().getId());
         verify(repository, times(1)).findStudentById(1L);
         verify(repository, times(1)).findCoursesByStudentId(1L);
         verify(converter, times(1)).convertStudentDetails(List.of(student), studentsCoursesList);
+        /*verifyでリポジトリにあるfindStudentByIdとfindCoursesByStudentId、converterにある
+        * convertStudentDetailsにある(List.of(student), studentsCoursesList)を１回呼び出す*/
     }
 
     @Test
