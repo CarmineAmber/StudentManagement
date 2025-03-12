@@ -1,5 +1,6 @@
 package student.management.StudentManagement.data;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,6 +10,7 @@ import student.management.StudentManagement.Validation.ValidationGroups;
  * クラス宣言の前にimport lombok.Getter,import lombok.Setter,
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
 
+@Schema(description = "受講生")
 @Getter
 @Setter
 public class Student {
@@ -20,6 +22,8 @@ public class Student {
     * 確認する用途に使われる（主にIDや数量のバリデーション）*/
     private Integer id;
 
+    /*@NotNullと@NotBlankを使用することで、nullと""の両方をバリデーションする。
+    * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
     @NotNull(message = "エラー: 名前が入力されていません。")
     @NotBlank(message = "エラー: 名前が入力されていません。")
     private String studentName;
@@ -50,7 +54,27 @@ public class Student {
     private String gender;
 
     private String remark;
-    private Boolean isDeleted; //論理削除
+    private Boolean isDeleted;//論理削除
+
+    // デフォルトコンストラクタ（必須）
+    public Student() {
+        /*テストコードを使用する際の引数なしのデフォルトコンストラクタ。
+        * このコンストラクタは、実行される前にまず自分自身の親クラスの
+        * コンストラクタを呼び出す。つまり、Studentクラスのコンストラクタ
+        * 全般を呼び出すという動作をしている*/
+    }
+
+    public Student(Integer id, String studentName, String furigana, String nickname,
+                   String email, String region, Integer age,String gender) {
+        this.id = id;
+        this.studentName = studentName;
+        this.furigana = furigana;
+        this.nickname = nickname;
+        this.email = email;
+        this.region = region;
+        this.age = age;
+        this.gender = gender;
+    }
 }
 /*このprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。
  * private変数は、メソッドを経由しないと変数の値を格納できなくなる。*/

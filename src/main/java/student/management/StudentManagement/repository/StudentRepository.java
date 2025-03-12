@@ -1,28 +1,36 @@
 package student.management.StudentManagement.repository;
 
 import org.apache.ibatis.annotations.*;
+import org.springframework.stereotype.Repository;
 import student.management.StudentManagement.StudentsWithCourses;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 
 import java.util.List;
+import java.util.Optional;
 
 /*受講生テーブルと受講生コース情報テーブル(mySQL データベース名StudentManagement)と紐づくリポジトリ*/
 
 @Mapper
+@Repository
 public interface StudentRepository {
 
     /*受講生一覧検索機能。
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
-    List<Student> search();
+    @Select("SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted FROM students")
+    List<Student> searchAllStudents();
 
     /*受講生検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
      * @return 受講生*/
-
+    @Select("""
+    SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+    FROM students
+    WHERE id = #{id}
+""")
     Student searchStudent(Long id);
 
     /*受講生のコース情報の全件検索を行う。
@@ -136,20 +144,28 @@ public interface StudentRepository {
     /*受講生を新規登録する。
     *IDに関しては自動採番を行う。
     *@param student 受講生*/
+    @Insert("INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark) " +
+            "VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark})")
     void registerStudent(Student student);
 
     /*受講生コース情報を新規登録する。
     *IDに関しては自動採番を行う。
     *@param studentsCourses 受講生コース情報*/
+    @Insert("INSERT INTO students_courses (student_id, course_name, start_date, end_date) " +
+            "VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})")
     void registerStudentCourse(StudentsCourse studentsCourse);
 
     @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
             "region, age, gender, remark FROM students WHERE id = #{id}")
-    Student findStudentById(@Param("id") Long id);
+    Optional<Student> findStudentById(@Param("id") Long id);
+
 
     @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
             "FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourse> findCoursesByStudentId(@Param("studentId") Long studentId);
+
+    @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
+    List<StudentsCourse> findStudentCoursesById(@Param("studentId") Long studentId);
 
     /*受講生情報を更新する。
     * @param student 受講生*/

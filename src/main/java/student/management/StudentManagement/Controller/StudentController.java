@@ -1,10 +1,12 @@
 package student.management.StudentManagement.Controller;
 
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import org.hibernate.type.descriptor.java.ObjectJavaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.HttpStatus;
@@ -48,13 +50,10 @@ public class StudentController {
     記載するだけでインスタンスとして成立させている。尚、this.service = service;
     this.converter = converterはStudentServiceとStudentConverterをこのクラスに紐づけている。*/
 
-    /*受講生詳細の一覧検索機能。
-     * 全件検索を行うため、条件指定は行わない。
-     * @return 受講生詳細一覧（全件検索）*/
+    @Operation(summary = "一覧検索", description = "受講生の一覧を検索する。")
     @GetMapping("/studentList")
     public List<StudentDetail> getStudentList() {
         List<StudentDetail> studentDetails = service.searchStudentList();
-        studentDetails.forEach(detail -> System.out.println("Response Name: " + detail.getStudent().getStudentName()));
         return service.searchStudentList();
     }
 
@@ -65,40 +64,15 @@ public class StudentController {
      * 簡単に利用できる。また、BindingResultを利用してエラーを簡単に処理できる。*/
     /*スペルミスに注意（updateStudentではない）*/
 
-    /*受講生詳細の登録を行う。
-     *@param studentDetail 受講生詳細
-     *@return 実行結果*/
+    @Operation(summary = "受講生登録", description = "受講生を登録する。")
     @PostMapping("/registerStudent")
-    public ResponseEntity<?> registerStudent(@Valid @RequestBody StudentDetail studentDetail) {
+    public ResponseEntity<StudentDetail> registerStudent(@Valid @RequestBody StudentDetail studentDetail) {
         StudentDetail savedStudent = service.registerStudent(studentDetail);
         return ResponseEntity.ok(savedStudent);
     }
     /*public ResponseEntity<String>とするとnullになるので注意すること*/
 
-    /*受講生詳細の検索。
-     * IDに紐づく任意の受講生の情報を取得する。
-     * @param id 受講生ID
-     * @return 受講生*/
-    @GetMapping("/student/{id}")
-    public StudentDetail getStudent(@PathVariable String id) {
-        if ( !id.matches("^\\d+$") ) {
-            throw new TestException("IDは半角数字で入力して下さい。");
-        }
-
-        Long studentId = Long.valueOf(id);
-        StudentDetail studentDetail = service.searchStudent(studentId);
-
-        if ( studentDetail == null || studentDetail.getStudent() == null ) {
-            throw new StudentNotFoundException("該当のデータが存在しません。");
-        }
-
-        return studentDetail;
-    }
-    /*@Sizeとは、文字数を制限するということ。つまりこの構文では１桁から３桁までの数字に制限する*/
-    /*regexpは正規表現を行うということ*/
-
-    /*受講生更新。
-     * @return 受講生とコース情報*/
+    @Operation(summary = "受講生更新", description = "受講生の更新を個人検索画面から行う。")
     @PostMapping("/student/{id}")
     public ResponseEntity<String> updateStudentWithCourses(@RequestBody StudentDetail studentDetail) {
         try {
@@ -112,45 +86,35 @@ public class StudentController {
         }
     }
 
-    /*/{id}としなければ個別のページを表示できない。例えばid３の受講生を表示する場合は
-     * /student/3と入力する*/
-    /*このコードは受講生オブジェクトを取得し、削除フラグisDeleted（キャンセルのチェックボックス）が
-     *trueであるか確認する。trueの場合、受講生を論理削除（非表示にする、つまりキャンセルのチェックボックスを
-     * オンにする）するgetIsDeleted処理を行う。その際、longValue()を使用してIntegerをLongに変更している。
-     * isDeletedがfalseかnullの場合、受講生情報を更新する。*/
-
-    @GetMapping("/student/detail/{id}")
-    public String getStudentDetail(@PathVariable Long id, Model model) {
-        StudentDetail studentDetail = service.getStudentDetailById(id);
-        if ( studentDetail == null ) {
-            return "error/404"; // 学生が見つからない場合、404エラーページを表示
+    @Operation(summary = "受講生検索",description = "受講生を検索する")
+    @GetMapping("/student/{id}")
+    public ResponseEntity<Object> getStudent(@PathVariable("id") String id) {
+        if (!id.matches("\\d+")) {
+            return ResponseEntity.badRequest().body("IDは半角数字で入力して下さい。");
         }
-        model.addAttribute("studentDetail", studentDetail);
-        return "studentDetail"; // 詳細を表示するビュー
-    }
 
-    @PostMapping("/updateCourse")
-    public ResponseEntity<String> updateCourse(@RequestBody StudentsCourse studentsCourses) {
-        int rowsAffected = service.updateStudentsCourses(studentsCourses);
-        if ( rowsAffected > 0 ) {
-            return ResponseEntity.ok("コース名の更新に成功しました。");
+        Long studentId = Long.parseLong(id);
+        StudentDetail studentDetail = service.searchStudent(studentId);
+
+        if (studentDetail == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("該当のデータが存在しません。");
         }
-        return ResponseEntity.status(400).body("更新処理が失敗しました。");
+
+        Student student = studentDetail.getStudent();
+        return ResponseEntity.ok(student);
     }
 
-    /*受講生詳細の更新を行う。キャンセルフラグの更新もここで行う（論理削除）。
-     * @param studentDetail 受講生詳細
-     * @return 実行結果*/
-
-    @InitBinder
-    public void initBinder(WebDataBinder binder) {
-        binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
-    }
-
+    @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
     @PutMapping("/updateStudents")
     public ResponseEntity<?> updateStudent(@Valid @RequestBody StudentDetail studentDetail) {
         service.updateStudentWithCourses(studentDetail);
         return ResponseEntity.ok("更新成功");
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception e) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("Internal Server Error: " + e.getMessage());
     }
 }
 /*@RequestParamとは、ブラウザからのリクエストの値（パラメータ）を取得することのできるアノテーション。
