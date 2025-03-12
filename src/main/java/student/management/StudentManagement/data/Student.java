@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import student.management.StudentManagement.Validation.ValidationGroups;
 
+import java.util.List;
+
 /*lombokを使うことで、いちいちgetterとsetterを書く必要がなくなる。
  * クラス宣言の前にimport lombok.Getter,import lombok.Setter,
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
@@ -15,6 +17,7 @@ import student.management.StudentManagement.Validation.ValidationGroups;
 @Setter
 public class Student {
 
+    @Null(message = "新規登録時は id を指定しないでください。")
     @Min(value = 1,message = "IDは1以上である必要があります。")
     /*(regexp = "^\\d+$")とは、数値のみの文字列を検証するための正規表現。
     * ^で文字列の先頭からマッチし、\\d+で0~9までの数字を１回以上繰り返す。

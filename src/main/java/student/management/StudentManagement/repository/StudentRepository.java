@@ -35,7 +35,18 @@ public interface StudentRepository {
 
     /*受講生のコース情報の全件検索を行う。
     *@return 受講生のコース情報（全件）*/
-    @Select("SELECT * FROM students_courses")
+    @Select("""
+    SELECT
+        sc.id AS courseId,
+        sc.course_name AS courseName,
+        sc.start_date AS startDate,
+        sc.end_date AS endDate,
+        sc.student_id AS studentId
+    FROM
+        students_courses sc
+    LEFT JOIN
+        students s ON sc.student_id = s.id
+""")
     List<StudentsCourse> searchAllCoursesList();
 
     /*受講生IDに紐づく受講生コース情報を検索する。
@@ -146,6 +157,7 @@ public interface StudentRepository {
     *@param student 受講生*/
     @Insert("INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark) " +
             "VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
     void registerStudent(Student student);
 
     /*受講生コース情報を新規登録する。
@@ -155,12 +167,15 @@ public interface StudentRepository {
             "VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})")
     void registerStudentCourse(StudentsCourse studentsCourse);
 
-    @Select("SELECT id, name AS studentName, furigana, nickname AS nickName, email, " +
-            "region, age, gender, remark FROM students WHERE id = #{id}")
+    @Select("""
+    SELECT id, name, furigana, nickname, email, region, age, gender, remark, isdeleted
+    FROM students
+    WHERE id = #{id}
+    """)
     Optional<Student> findStudentById(@Param("id") Long id);
 
 
-    @Select("SELECT course_name AS courseName, start_date AS startDate, end_date AS endDate " +
+    @Select("SELECT id AS courseId,course_name AS courseName, start_date AS startDate, end_date AS endDate " +
             "FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourse> findCoursesByStudentId(@Param("studentId") Long studentId);
 
@@ -169,10 +184,34 @@ public interface StudentRepository {
 
     /*受講生情報を更新する。
     * @param student 受講生*/
+    @Update("""
+        UPDATE students
+        SET
+        name = #{studentName},
+        furigana = #{furigana},
+        nickname = #{nickname},
+        email = #{email},
+        region = #{region},
+        age = #{age},
+        gender = #{gender},
+        remark = #{remark},
+        isdeleted = COALESCE(#{isDeleted}, false)
+        WHERE
+        id = #{id}
+    """)
     int updateStudent(Student student);
 
     /*受講生コース情報のコース名を更新する。
     * @param studentCourse 受講生コース情報*/
+    @Update("""
+        UPDATE students_courses
+        SET
+        course_name = #{courseName},
+        start_date = #{startDate},
+        end_date = #{endDate}
+        WHERE
+        id = #{courseId}
+    """)
     int updateStudentCourse(StudentsCourse studentsCourse);
 
     @Insert("""
@@ -196,7 +235,7 @@ public interface StudentRepository {
                 FROM
                     students
                 WHERE
-                    id = #{id}
+                    id = #{id} AND isdeleted = 0
             """)
     StudentDetail findStudentDetailById(@Param("id") Long id);
 
