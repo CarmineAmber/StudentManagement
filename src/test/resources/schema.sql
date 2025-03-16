@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS students
 (
-    id INT PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     furigana VARCHAR(255),
     nickname VARCHAR(50),
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS students
 
 CREATE TABLE IF NOT EXISTS students_courses
 (
-    id INT PRIMARY KEY,
+    id INT PRIMARY KEY AUTO_INCREMENT,  -- AUTO_INCREMENTを追加
     student_id INT NOT NULL,
     course_name VARCHAR(100),
     start_date TIMESTAMP,
