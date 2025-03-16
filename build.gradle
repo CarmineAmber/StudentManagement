@@ -31,6 +31,12 @@ processResources {
 	}
 }
 
+processResources {
+	from("src/main/resources/mapper") {
+		into("mapper")
+	}
+}
+
 
 dependencies {/*依存関係及びスターターの編集*/
 	/*Spring Boot*/
@@ -58,8 +64,14 @@ dependencies {/*依存関係及びスターターの編集*/
 	/*MyBatis*/
 	implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.3'
 
+	/*APサーバー（Tomcat）*/
 	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
+	/*SpringBoot Test*/
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+
+	testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.3'
+
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
 	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
@@ -67,6 +79,9 @@ dependencies {/*依存関係及びスターターの編集*/
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-web' // 必要に応じて追加
 	implementation 'com.h2database:h2'
+
+	/*H2(inMemoryDB：一時的なデータベース。データベースのテストで使用する)*/
+	testImplementation 'com.h2database:h2:2.2.224'
 }
 
 tasks.named('test') {

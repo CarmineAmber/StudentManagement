@@ -21,16 +21,14 @@ public class StudentDetail {
     @Valid
     private Student student;
 
+    @Setter
     @JsonProperty("studentCourseList")
     @Valid
-    private List<@Valid StudentsCourse> studentCourseList= new ArrayList<>();
+    private List<StudentsCourse> studentCourseList= new ArrayList<>();
     /*studentとstudentCoursesの２つのクラスに表記されているものを
     * 繋ぎ合わせ、StudentDetailを作っている。
     * 尚、リストがnullになることによるサーバーエラーを防ぐために
     * new ArrayList<>を表示して初期化している。*/
 
-    public void setStudentCourseList(List<StudentsCourse> studentCourseList) {
-        this.studentCourseList = studentCourseList;
-    }
     /*ValidをStudentsCoursesにも適用することで、登録チェック漏れを防いでいる*/
 }

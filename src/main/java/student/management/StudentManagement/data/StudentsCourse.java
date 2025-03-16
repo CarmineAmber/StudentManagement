@@ -40,7 +40,6 @@ public class StudentsCourse {
     }
 
     public StudentsCourse(Integer studentId, String courseName){
-        this.courseId= courseId;
         this.studentId = studentId;
         this.courseName = courseName;
     }
