@@ -81,7 +81,7 @@ dependencies {/*依存関係及びスターターの編集*/
 	implementation 'com.h2database:h2'
 
 	/*H2(inMemoryDB：一時的なデータベース。データベースのテストで使用する)*/
-	testImplementation 'com.h2database:h2:2.2.224'
+	implementation 'com.h2database:h2:2.2.224'
 }
 
 tasks.named('test') {

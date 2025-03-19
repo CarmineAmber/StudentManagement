@@ -44,12 +44,6 @@
         LEFT JOIN students_courses sc ON s.id = sc.student_id
     </select>
 
-    <!-- 30代の受講生取得 -->
-    <select id="searchStudentsInAgeRange" resultType="student.management.StudentManagement.data.Student">
-        SELECT id, name AS studentName, furigana, nickname AS nickName, email, region, age, gender
-        FROM students WHERE age BETWEEN #{ageStart} AND #{ageEnd}
-    </select>
-
     <!-- 特定のコース名の受講生取得 -->
     <select id="searchStudentsByCourseName" resultType="student.management.StudentManagement.StudentsWithCourses">
         SELECT s.id AS studentId, s.name AS studentName, s.furigana, s.nickname AS nickName,
