@@ -1,6 +1,7 @@
 package student.management.StudentManagement.Controller.converter;
 
 import org.springframework.stereotype.Component;
+import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;

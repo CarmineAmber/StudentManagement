@@ -2,33 +2,20 @@ package student.management.StudentManagement.Controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
-import org.hibernate.type.descriptor.java.ObjectJavaType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
-import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import student.management.StudentManagement.Validation.ValidationGroups;
-import student.management.StudentManagement.data.Student;
+import student.management.StudentManagement.data.CourseStatusDTO;
+import student.management.StudentManagement.data.CourseStatusUpdateRequest;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
-import student.management.StudentManagement.exception.StudentNotFoundException;
-import student.management.StudentManagement.exception.TestException;
 import student.management.StudentManagement.repository.StudentRepository;
 import student.management.StudentManagement.service.StudentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Objects;
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
 import java.util.List;
@@ -55,11 +42,12 @@ public class StudentController {
     記載するだけでインスタンスとして成立させている。尚、this.service = service;
     this.converter = converterはStudentServiceとStudentConverterをこのクラスに紐づけている。*/
 
-    @Operation(summary = "一覧検索", description = "受講生の一覧を検索する。")
+    @Operation(summary = "受講生の一覧検索", description = "全ての受講生の一覧を検索する。")
     @GetMapping("/studentList")
-    public List<StudentDetail> getStudentList() {
-        List<StudentDetail> studentDetails = service.searchStudentList();
-        return studentDetails;
+    public ResponseEntity<List<StudentDetail>> getAllStudents() {
+        // サービス層で全ての学生とそのコースデータを取得
+        List<StudentDetail> allStudentDetails = service.getAllStudentsWithCourseStatuses();
+        return ResponseEntity.ok(allStudentDetails);
     }
 
     /*@ModelAttributeは一般的にHTTPのGETメソッドで使用されるが、POSTメソッドでも使用できる。
@@ -91,23 +79,25 @@ public class StudentController {
         }
     }
 
-    @Operation(summary = "受講生検索",description = "受講生を検索する")
-    @GetMapping("/student/{id}")
-    public ResponseEntity<Object> getStudent(@PathVariable("id") String id) {
-        if (!id.matches("\\d+")) {
-            return ResponseEntity.badRequest().body("IDは半角数字で入力して下さい。");
-        }
-
-        Long studentId = Long.parseLong(id);
-        StudentDetail studentDetail = service.searchStudent(studentId);
-
-        if (studentDetail == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("該当のデータが存在しません。");
-        }
-
-        return ResponseEntity.ok(studentDetail); // StudentDetailを返す
+    @Operation(summary = "受講生検索", description = "受講生をIDで検索する")
+    @GetMapping("/student/{studentId}")
+    public StudentDetail searchStudentById(@PathVariable Integer studentId) { // ✅ 修正
+        System.out.println("Received studentId: " + studentId);
+        return service.searchStudent(studentId);
     }
 
+    @Operation(summary = "受講生受講状況",description = "受講生受講状況を確認する。")
+    @GetMapping("/student/{studentId}/courses/status")
+    public List<CourseStatusDTO> getStudentCourseStatus(@PathVariable Integer studentId) {
+        return service.getStudentCourseStatus(studentId);
+    }
+
+    @Operation(summary = "受講生受講状況更新",description = "受講生受講状況を更新する。")
+    @PutMapping("/courses/status")
+    public ResponseEntity<String> updateStudentCourseStatus(@RequestBody CourseStatusUpdateRequest request) {
+        service.updateStudentCourseStatus(request.getStudentsCoursesId(), request.getStatus());
+        return ResponseEntity.ok("受講状況を更新しました");
+    }
 
     @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
     @PutMapping("/updateStudents")
@@ -126,6 +116,8 @@ public class StudentController {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleException(Exception e) {
+        // エラーログを詳細に出力
+        log.error("エラー発生:", e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("Internal Server Error: " + e.getMessage());
     }

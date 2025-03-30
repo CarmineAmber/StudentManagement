@@ -1,5 +1,6 @@
 package student.management.StudentManagement.data;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -17,6 +18,9 @@ import java.util.List;
 @Setter
 public class Student {
 
+    private List<StudentsCourse> studentsCourses;
+
+    @JsonProperty("id")
     @Null(message = "新規登録時は id を指定しないでください。")
     /*(regexp = "^\\d+$")とは、数値のみの文字列を検証するための正規表現。
     * ^で文字列の先頭からマッチし、\\d+で0~9までの数字を１回以上繰り返す。
@@ -26,36 +30,46 @@ public class Student {
 
     /*@NotNullと@NotBlankを使用することで、nullと""の両方をバリデーションする。
     * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
+    @JsonProperty("studentName")
     @NotNull(message = "エラー: 名前が入力されていません。")
     @NotBlank(message = "エラー: 名前が入力されていません。")
     private String studentName;
 
+    @JsonProperty("furigana")
     @NotNull(message = "エラー: フリガナが入力されていません。")
     @NotBlank(message = "エラー: フリガナが入力されていません。")
     private String furigana;
 
+    @JsonProperty("nickname")
     @NotNull(message = "エラー: ニックネームが入力されていません。")
     @NotBlank(message = "エラー: ニックネームが入力されていません。")
     private String nickname;
 
+    @JsonProperty("email")
     @NotNull(message = "エラー: メールアドレスが入力されていません。")
     @NotBlank(message = "エラー: メールアドレスが入力されていません。")
     @Email(message = "エラー: 正しいメールアドレスを入力してください。")
     private String email;
 
+    @JsonProperty("region")
     @NotNull(message = "エラー: 地域が入力されていません。")
     @NotBlank(message = "エラー: 地域が入力されていません。")
     private String region;
 
+    @JsonProperty("age")
     @Min(0)
     @Max(120)
     private Integer age;
 
+    @JsonProperty("gender")
     @NotNull(message = "エラー: 性別が入力されていません。")
     @NotBlank(message = "エラー: 性別が入力されていません。")
     private String gender;
 
+    @JsonProperty("remark")
     private String remark;
+
+    @JsonProperty("isDeleted")
     private Boolean isDeleted;//論理削除
 
     // デフォルトコンストラクタ（必須）
@@ -76,6 +90,10 @@ public class Student {
         this.region = region;
         this.age = age;
         this.gender = gender;
+    }
+
+    public List<StudentsCourse> getStudentCourses() {
+        return studentsCourses;
     }
 }
 /*このprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。
