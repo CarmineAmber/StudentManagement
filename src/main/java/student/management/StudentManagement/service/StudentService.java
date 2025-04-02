@@ -159,21 +159,21 @@ public class StudentService {
 
     /*特定の性別の受講生情報を全て取得する*/
     public List<StudentDetail> searchStudentsByGender(String gender) {
-        // 性別が null または空の場合はエラーをスロー
+        // 性別が無効な場合はエラーをスロー
         if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
             throw new IllegalArgumentException("Invalid gender value");
         }
 
         List<StudentDetail> studentDetails = new ArrayList<>();
 
-        // gender が指定されている場合、性別で検索
+        // 性別で学生を検索
         List<Student> students = repository.findStudentByGender(gender);
 
         if (students.isEmpty()) {
             throw new IllegalArgumentException("No students found for the given gender.");
         }
 
-        // それぞれの学生について、学生のコース情報と最新の受講ステータスを取得
+        // 各学生に対して、コース情報と受講ステータスを取得
         for (Student student : students) {
             List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
             List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(student.getId());
@@ -186,11 +186,9 @@ public class StudentService {
 
             studentDetails.add(studentDetail);
         }
+
         return studentDetails;
     }
-
-
-
 
     /*StudentをStudentDetailに変更するメソッド*/
     private StudentDetail convertToStudentDetail(Student student) {

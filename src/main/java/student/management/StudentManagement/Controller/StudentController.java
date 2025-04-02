@@ -97,11 +97,12 @@ public class StudentController {
 
     @Operation(summary = "受講生の性別による検索", description = "性別で受講生を検索する")
     @GetMapping("/studentList/gender")
-    public ResponseEntity<List<Student>> getStudentsByGender(@RequestParam String gender) {
+    public ResponseEntity<List<StudentDetail>> getStudentsByGender(@RequestParam String gender) {
         log.info("Searching students with gender: {}", gender);  // ログを追加
-        List<Student> students = service.getStudentByGender(gender);
-        return ResponseEntity.ok(students);
+        List<StudentDetail> studentDetails = service.searchStudentsByGender(gender);
+        return ResponseEntity.ok(studentDetails);
     }
+
 
     @Operation(summary = "受講生受講状況",description = "受講生受講状況を確認する。")
     @GetMapping("/student/{studentId}/courses/status")
