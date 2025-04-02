@@ -66,37 +66,37 @@ public interface StudentRepository {
     List<StudentsCourse> searchAllCourse(Long studentId);
 
     @Select("""
-    <script>
-    SELECT s.id AS studentId, s.name, s.gender, sc.id AS studentsCoursesId, sc.course_name AS courseName,
-           latest_status.status, sc.id AS courseId
-    FROM students s
-    LEFT JOIN students_courses sc ON s.id = sc.student_id
-    LEFT JOIN (
-        SELECT scs1.students_courses_id, scs1.status
-        FROM students_courses_status scs1
-        JOIN (
-            SELECT students_courses_id, MAX(id) AS latest_id
-            FROM students_courses_status
-            GROUP BY students_courses_id
-        ) latest ON scs1.id = latest.latest_id
-    ) latest_status ON sc.id = latest_status.students_courses_id
-    <where>
-        <if test="studentId != null">
-            AND s.id = #{studentId}
-        </if>
-        <if test="gender != null and gender != ''">
-            AND s.gender = #{gender}
-        </if>
-        <if test="courseName != null and courseName != ''">
-            AND sc.course_name LIKE CONCAT('%', #{courseName}, '%')
-        </if>
-    </where>
-    ORDER BY s.id
-    </script>
-""")
+                <script>
+                SELECT s.id AS studentId, s.name, s.gender, sc.id AS studentsCoursesId, sc.course_name AS courseName,
+                       latest_status.status, sc.id AS courseId
+                FROM students s
+                LEFT JOIN students_courses sc ON s.id = sc.student_id
+                LEFT JOIN (
+                    SELECT scs1.students_courses_id, scs1.status
+                    FROM students_courses_status scs1
+                    JOIN (
+                        SELECT students_courses_id, MAX(id) AS latest_id
+                        FROM students_courses_status
+                        GROUP BY students_courses_id
+                    ) latest ON scs1.id = latest.latest_id
+                ) latest_status ON sc.id = latest_status.students_courses_id
+                <where>
+                    <if test="studentId != null">
+                        AND s.id = #{studentId}
+                    </if>
+                    <if test="gender != null and gender != ''">
+                        AND s.gender = #{gender}
+                    </if>
+                    <if test="courseName != null and courseName != ''">
+                        AND sc.course_name LIKE CONCAT('%', #{courseName}, '%')
+                    </if>
+                </where>
+                ORDER BY s.id
+                </script>
+            """)
     List<Student> searchStudents(@Param("studentId") Integer studentId,
-                                       @Param("gender") String gender,
-                                       @Param("courseName") String courseName);
+                                 @Param("gender") String gender,
+                                 @Param("courseName") String courseName);
 
     /*WHERE isdeleted = falseがないとリストに非表示にならない*/
 
@@ -192,16 +192,15 @@ public interface StudentRepository {
 
     /*全ての受講生情報を取得する*/
     @Select("""
-        SELECT id, name, furigana, nickname, email, region, age, gender, remark, isdeleted
-        FROM students
-        """)
+                SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+                FROM students
+            """)
     List<Student> findAllStudents();
-
 
     /*受講生の詳細を取得する*/
     @Select("""
                 SELECT 
-                    s.id AS student_id, s.furigana, s.nickname, s.email, s.region, s.age, 
+                    s.id AS student_id, s.name AS studentName, s.furigana, s.nickname, s.email, s.region, s.age, 
                     s.gender, s.remark, s.isDeleted, 
                     sc.id AS course_id, sc.start_date AS start_date, sc.end_date AS end_date, sc.course_name AS course_name, 
                     COALESCE(scs.students_courses_id, 0) AS student_course_id, 
@@ -213,6 +212,7 @@ public interface StudentRepository {
             """)
     @Results({
             @Result(property = "student.id", column = "student_id"),
+            @Result(property = "student.name", column = "studentName"),
             @Result(property = "student.furigana", column = "furigana"),
             @Result(property = "student.nickname", column = "nickname"),
             @Result(property = "student.email", column = "email"),
@@ -232,42 +232,48 @@ public interface StudentRepository {
     })
     StudentDetail getStudentDetails(@Param("studentId") Integer studentId);
 
-
     /*受講生のコース情報を取得する。情報が重複する場合、１つに統一する。*/
     @Select("""
-        SELECT sc.id, sc.start_date AS startDate, sc.end_date AS endDate, sc.student_id AS studentId, sc.course_name AS courseName
-        FROM students_courses sc
-        WHERE sc.student_id = #{studentId}
-        ORDER BY sc.id DESC
-        LIMIT 1
-        """)
-    List<StudentsCourse> getStudentCourses(@Param("studentId") Integer studentId);
+                SELECT sc.id, sc.start_date, sc.end_date, sc.student_id, sc.course_name AS courseName
+                FROM students_courses sc
+                WHERE sc.student_id = #{studentId}
+                ORDER BY sc.id DESC LIMIT 1
+            """)
+    List<StudentsCourse> getStudentCourses(Integer studentId);
 
 
     /*受講生の受講状況を取得する*/
     @Select("""
-        SELECT scs.students_courses_id AS studentsCoursesId, sc.course_name AS courseName, scs.status, s.name AS studentName
-        FROM students_courses_status scs
-        JOIN students_courses sc ON sc.id = scs.students_courses_id
-        JOIN students s ON s.id = sc.student_id
-        WHERE s.id = #{studentId}
-        AND scs.students_courses_id = sc.id
-        ORDER BY scs.id DESC  -- 最新のデータを優先
-        LIMIT 1               -- 最新の 1 件のみ取得
-        """)
+            SELECT scs.students_courses_id AS studentsCoursesId, sc.course_name AS courseName, scs.status, s.name AS studentName
+            FROM students_courses_status scs
+            JOIN students_courses sc ON sc.id = scs.students_courses_id
+            JOIN students s ON s.id = sc.student_id
+            WHERE s.id = #{studentId}
+            AND scs.students_courses_id = sc.id
+            ORDER BY scs.id DESC  -- 最新のデータを優先
+            LIMIT 1               -- 最新の 1 件のみ取得
+            """)
     List<CourseStatusDTO> getCourseStatuses(@Param("studentId") Integer studentId);
     // 引数を studentId に変更
 
     /*受講生の最新の受講状況を取得する*/
     @Select("""
-        SELECT scs.students_courses_id AS studentsCoursesId, sc.course_name AS courseName, scs.status
-        FROM students_courses_status scs
-        JOIN students_courses sc ON sc.id = scs.students_courses_id
-        WHERE sc.student_id = #{studentId}
-        ORDER BY scs.id DESC
-        LIMIT 1
-        """)
+            SELECT scs.students_courses_id AS studentsCoursesId, sc.course_name AS courseName, scs.status
+            FROM students_courses_status scs
+            JOIN students_courses sc ON sc.id = scs.students_courses_id
+            WHERE sc.student_id = #{studentId}
+            ORDER BY scs.id DESC
+            LIMIT 1
+            """)
     List<CourseStatusDTO> getLatestCourseStatus(@Param("studentId") Integer studentId);
+
+    /*受講生の情報を性別で検索できるようにするためのリポジトリ*/
+    @Select("""
+                SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+                FROM students
+                WHERE LOWER(gender) = LOWER(#{gender}) AND isdeleted = 0
+            """)
+    List<Student> findStudentByGender(@Param("gender") String gender);
 
     @Select("SELECT scs.students_courses_id, scs.status " +
             "FROM students_courses_status scs " +
@@ -351,11 +357,12 @@ public interface StudentRepository {
     void registerCourseStatus(@Param("studentsCoursesId") Integer studentsCoursesId, @Param("status") String status);
 
     @Select("""
-        SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
-        FROM students
-        WHERE id = #{id}
-        """)
+            SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+            FROM students
+            WHERE id = #{id} AND isdeleted = 0
+            """)
     Optional<Student> findStudentById(@Param("id") Long id);
+
 
     /*受講生情報、コース情報、受講情報全てを取得する。*/
     @Query("SELECT s FROM Student s JOIN FETCH s.studentCourses sc JOIN FETCH sc.course")

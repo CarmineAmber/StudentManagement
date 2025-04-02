@@ -115,33 +115,80 @@ public class StudentService {
         return studentDetails;
     }
 
-
+    public List<Student> getStudentByGender(String gender) {
+        log.info("Searching students with gender: {}", gender);  // genderパラメータのログ
+        if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
+            throw new IllegalArgumentException("Invalid gender value");
+        }
+        return repository.findStudentByGender(gender);
+    }
 
     /*受講生詳細検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
      * @return 受講生詳細*/
-    public StudentDetail searchStudent(Integer studentId) {
-        Long studentIdLong = studentId.longValue();
-        Student student = repository.findStudentById(studentIdLong).orElse(null);
-        if (student == null) {
+    public StudentDetail searchStudent(Integer studentId, String gender) {
+        List<Student> students = new ArrayList<>();
+
+        if (studentId != null) {
+            Long studentIdLong = studentId.longValue();
+            Optional<Student> optionalStudent = repository.findStudentById(studentIdLong);
+            optionalStudent.ifPresent(students::add);
+        } else if (gender != null) {
+            students = repository.findStudentByGender(gender);
+        } else {
+            throw new IllegalArgumentException("Either studentId or gender must be provided.");
+        }
+
+        if (students.isEmpty()) {
             return null;
         }
 
-        // 受講情報を取得（仮申込）
-        List<StudentsCourse> studentsCourses = repository.getStudentCourses(studentId);
+        // ログを追加して studentName を確認
+        log.info("Student name: {}", students.get(0).getStudentName());
 
-        // 最新の受講ステータス（本申込）を取得
-        List<CourseStatusDTO> courseStatuses = repository.getCourseStatuses(studentId);
+        List<StudentsCourse> studentsCourses = repository.getStudentCourses(students.get(0).getId());
+        List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(students.get(0).getId());
 
         // StudentDetail を作成
-        StudentDetail studentDetail = new StudentDetail();
-        studentDetail.setStudent(student);
-        studentDetail.setStudentCourseList(studentsCourses);
-        studentDetail.setCourseStatuses(courseStatuses);
+        StudentDetail studentDetail = new StudentDetail(students.get(0), studentsCourses, courseStatuses);  // 名前もセットされる
 
         return studentDetail;
     }
+
+
+    /*特定の性別の受講生情報を全て取得する*/
+    public List<StudentDetail> searchStudentsByGender(String gender) {
+        // 性別が null または空の場合はエラーをスロー
+        if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
+            throw new IllegalArgumentException("Invalid gender value");
+        }
+
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        // gender が指定されている場合、性別で検索
+        List<Student> students = repository.findStudentByGender(gender);
+
+        if (students.isEmpty()) {
+            throw new IllegalArgumentException("No students found for the given gender.");
+        }
+
+        // それぞれの学生について、学生のコース情報と最新の受講ステータスを取得
+        for (Student student : students) {
+            List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
+            List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(student.getId());
+
+            // StudentDetail を作成
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student); // 学生情報をセット
+            studentDetail.setStudentCourseList(studentsCourses); // コース情報をセット
+            studentDetail.setCourseStatuses(courseStatuses); // 最新の受講ステータスをセット
+
+            studentDetails.add(studentDetail);
+        }
+        return studentDetails;
+    }
+
 
 
 

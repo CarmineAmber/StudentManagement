@@ -9,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.CourseStatusUpdateRequest;
+import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.repository.StudentRepository;
@@ -80,10 +81,26 @@ public class StudentController {
     }
 
     @Operation(summary = "受講生検索", description = "受講生をIDで検索する")
-    @GetMapping("/student/{studentId}")
-    public StudentDetail searchStudentById(@PathVariable Integer studentId) { // ✅ 修正
-        System.out.println("Received studentId: " + studentId);
-        return service.searchStudent(studentId);
+    @GetMapping("/student")
+    public StudentDetail searchStudent(
+            @RequestParam(required = false) Integer studentId,
+            @RequestParam(required = false) String gender) {  // 性別も検索条件に追加
+        if (studentId == null && gender == null) {
+            throw new IllegalArgumentException("studentId or gender is required");
+        }
+
+        System.out.println("Received studentId: " + studentId + " and gender: " + gender);
+
+        // サービス層での処理
+        return service.searchStudent(studentId, gender);
+    }
+
+    @Operation(summary = "受講生の性別による検索", description = "性別で受講生を検索する")
+    @GetMapping("/studentList/gender")
+    public ResponseEntity<List<Student>> getStudentsByGender(@RequestParam String gender) {
+        log.info("Searching students with gender: {}", gender);  // ログを追加
+        List<Student> students = service.getStudentByGender(gender);
+        return ResponseEntity.ok(students);
     }
 
     @Operation(summary = "受講生受講状況",description = "受講生受講状況を確認する。")

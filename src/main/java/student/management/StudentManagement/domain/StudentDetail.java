@@ -31,6 +31,10 @@ public class StudentDetail {
     @Valid
     private List<CourseStatusDTO> courseStatuses;
 
+    private String gender;
+    private String courseName;
+    private String courseStatus;
+
     // 既存のコンストラクタ
     public StudentDetail(Student student, List<StudentsCourse> studentCourseList, List<CourseStatusDTO> courseStatuses) {
         this.student = student;
