@@ -45,6 +45,13 @@ public class StudentConverter {
 
         return studentDetails;
     }
+    public Student convertStudentDetailToStudent(StudentDetail detail) {
+        return detail.getStudent();
+    }
+
+    public List<StudentsCourse> convertStudentDetailToCourses(StudentDetail detail) {
+        return detail.getStudentCourseList();
+    }
 }
 
 /*このクラスの役割は、特定のデータ型やオブジェクトを別の型やフォーマットに変換すること。

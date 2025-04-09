@@ -5,7 +5,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
-import student.management.StudentManagement.Validation.ValidationGroups;
+import student.management.StudentManagement.Validation.OnCreate;
+import student.management.StudentManagement.Validation.OnUpdate;
 
 
 import java.util.List;
@@ -22,7 +23,8 @@ public class Student {
     private List<StudentsCourse> studentsCourses;
 
     @JsonProperty("id")
-    @Null(message = "新規登録時は id を指定しないでください。")
+    @Null(groups = OnCreate.class, message = "新規登録時は id を指定しないでください。")
+    @NotNull(groups = OnUpdate.class, message = "更新時は id を指定してください。")
     /*(regexp = "^\\d+$")とは、数値のみの文字列を検証するための正規表現。
     * ^で文字列の先頭からマッチし、\\d+で0~9までの数字を１回以上繰り返す。
     * $は文字列の末尾でマッチする。これらはユーザー入力が整数のみであることを

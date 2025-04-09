@@ -5,6 +5,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import student.management.StudentManagement.data.CourseStatusDTO;
@@ -19,7 +21,9 @@ import org.slf4j.LoggerFactory;
 
 /*Modelを使用する際は、この場合はui.Modelを選択する（間違って別のものを選ばないようにする）*/
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /*受講生の検索や登録、更新などを行うREST APIとして受け付けるController*/
 
@@ -68,9 +72,22 @@ public class StudentController {
 
     @Operation(summary = "受講生更新", description = "受講生の更新を個人検索画面から行う。")
     @PostMapping("/student/{id}")
-    public ResponseEntity<String> updateStudentWithCourses(@RequestBody StudentDetail studentDetail) {
+    public ResponseEntity<?> updateStudentWithCourses(
+            @PathVariable Long id,
+            @Valid @RequestBody StudentDetail studentDetail,
+            BindingResult bindingResult) {
+
+        if (bindingResult.hasErrors()) {
+            Map<String, String> errors = new HashMap<>();
+            bindingResult.getAllErrors().forEach(error -> {
+                String fieldName = ((FieldError) error).getField();
+                String errorMessage = error.getDefaultMessage();
+                errors.put(fieldName, errorMessage);
+            });
+            return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);  // 400 Bad Request
+        }
+
         try {
-            // サービスメソッドでStudentとCoursesをまとめて更新
             service.updateStudentWithCourses(studentDetail);
             return ResponseEntity.ok("学生情報とコース情報の更新に成功しました。");
         } catch (IllegalStateException e) {
@@ -79,6 +96,7 @@ public class StudentController {
             return ResponseEntity.status(500).body("サーバーエラーが発生しました: " + e.getMessage());
         }
     }
+
 
     @Operation(summary = "受講生検索", description = "受講生をIDで検索する")
     @GetMapping("/student")
@@ -98,11 +116,17 @@ public class StudentController {
     @Operation(summary = "受講生の性別による検索", description = "性別で受講生を検索する")
     @GetMapping("/studentList/gender")
     public ResponseEntity<List<StudentDetail>> getStudentsByGender(@RequestParam String gender) {
-        log.info("Searching students with gender: {}", gender);  // ログを追加
         List<StudentDetail> studentDetails = service.searchStudentsByGender(gender);
         return ResponseEntity.ok(studentDetails);
     }
 
+    @Operation(summary = "受講生のコース名による検索", description = "コース名で受講生を検索する")
+    @GetMapping("/studentList/course")
+    public ResponseEntity<List<StudentDetail>> getStudentsByCourse(
+            @RequestParam("courseName") String courseName) {
+        List<StudentDetail> studentDetails = service.searchStudentsByCourseName(courseName);
+        return ResponseEntity.ok(studentDetails);
+    }
 
     @Operation(summary = "受講生受講状況",description = "受講生受講状況を確認する。")
     @GetMapping("/student/{studentId}/courses/status")

@@ -31,7 +31,6 @@ public interface StudentRepository {
             "FROM students WHERE isdeleted = false")
     List<Student> findAll();
 
-
     /*受講生検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
@@ -234,8 +233,12 @@ public interface StudentRepository {
 
     /*受講生のコース情報を取得する。情報が重複する場合、１つに統一する。*/
     @Select("""
-                SELECT sc.id, sc.start_date, sc.end_date, sc.student_id, sc.course_name AS courseName
-                FROM students_courses sc
+                SELECT sc.id,
+                           sc.start_date AS startDate,
+                           sc.end_date AS endDate,
+                           sc.student_id,
+                           sc.course_name AS courseName
+                    FROM students_courses sc
                 WHERE sc.student_id = #{studentId}
                 ORDER BY sc.id DESC LIMIT 1
             """)
@@ -267,7 +270,7 @@ public interface StudentRepository {
             """)
     List<CourseStatusDTO> getLatestCourseStatus(@Param("studentId") Integer studentId);
 
-    /*受講生の情報を性別で検索できるようにするためのリポジトリ*/
+    /*受講生の情報を性別から取得するためのリポジトリ*/
     @Select("""
                 SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
                 FROM students
@@ -280,26 +283,16 @@ public interface StudentRepository {
             "WHERE scs.students_courses_id = #{studentId}")
     List<CourseStatusDTO> getCourseStatusesByStudentId(Integer studentId);
 
-    /* 30代の受講生を取得 */
+    /*受講生の情報をコース名から取得するためのリポジトリ*/
     @Select("""
-                SELECT
-                    id AS Id,
-                    name AS studentName,
-                    furigana,
-                    nickname AS nickName,
-                    email,
-                    region,
-                    age,
-                    gender
-                FROM
-                    students
-                WHERE
-                    age BETWEEN #{ageStart} AND #{ageEnd}
+                SELECT s.id, s.name AS studentName, s.furigana, s.nickname, s.email, 
+                       s.region, s.age, s.gender, s.remark, s.isdeleted
+                FROM students s
+                JOIN students_courses sc ON s.id = sc.student_id
+                WHERE LOWER(sc.course_name) = LOWER(#{courseName}) 
+                AND s.isdeleted = 0
             """)
-    List<Student> searchStudentsInAgeRange(
-            @Param("ageStart") int ageStart,
-            @Param("ageEnd") int ageEnd
-    );
+    List<Student> findStudentsByCourseName(@Param("courseName") String courseName);
 
     /* 特定のコース名で受講生を取得 */
     @Select("""
@@ -457,7 +450,6 @@ public interface StudentRepository {
 
     @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")
     void updateIsDeleted(@Param("id") Long id, @Param("isDeleted") boolean isDeleted);
-
 }
 /* @Paramアノテーションを使うことで、動的にパラメータを渡すことができる。一例として、
    #{}というプレーズホルダーを使用することでSQLクエリ内で直接文字列を埋め込まないようにすることができ、

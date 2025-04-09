@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
-    /*受講競情報更新時の例外処理。400 Bad Requestを表示させる*/
+    /*受講生情報更新時の例外処理。400 Bad Requestを表示させる*/
     @ExceptionHandler(StudentUpdateException.class)
     public ResponseEntity<String> handleStudentUpdateException(StudentUpdateException ex) {
         logger.error("更新エラー: {}", ex.getMessage());
@@ -58,14 +58,11 @@ public class GlobalExceptionHandler {
     * このアプリにおいては、StudentDetailクラスのStudent及びprivate List
     <@Valid StudentsCourse> studentCourseList= new ArrayList<>();が対象*/
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<String> handleValidationException(MethodArgumentNotValidException ex) {
-        String errorMessage = ex.getBindingResult()
-                .getFieldErrors()
-                .stream()
-                .map(fieldError -> fieldError.getField() + ": " + fieldError.getDefaultMessage())
-                .collect(Collectors.joining(", "));
-
-        return ResponseEntity.badRequest().body("Validation Error: " + errorMessage);
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors().forEach(error ->
+                errors.put(error.getField(), error.getDefaultMessage()));
+        return ResponseEntity.badRequest().body(errors);
     }
 
     /*プログラム内部で不正な引数(このアプリにおいてはidが0未満あるいは空白)が渡された際の例外処理。

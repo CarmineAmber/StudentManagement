@@ -226,11 +226,33 @@ public class StudentService {
             throw new IllegalArgumentException("studentId cannot be null");
         }
 
-        System.out.println("getCourseStatuses studentId: " + studentId);
-
         // sqlSession を使ってクエリを実行
         return sqlsession.selectList("StudentManagementMapper.getCourseStatuses", studentId);
     }
+
+    /*特定のコース名の受講生情報を全て取得する*/
+    public List<StudentDetail> searchStudentsByCourseName(String courseName) {
+        List<Student> students = repository.findStudentsByCourseName(courseName);
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        for (Student student : students) {
+            List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
+
+            log.info("Student Courses for {}: {}", student.getStudentName(), studentsCourses);
+
+            List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(student.getId());
+
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student);
+            studentDetail.setStudentCourseList(studentsCourses);
+            studentDetail.setCourseStatuses(courseStatuses);
+
+            studentDetails.add(studentDetail);
+        }
+
+        return studentDetails;
+    }
+
 
     public StudentDetail getStudentDetail(Long studentId) {
         Student student = repository.findStudentById(studentId)

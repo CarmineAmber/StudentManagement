@@ -7,13 +7,13 @@ import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
-import student.management.StudentManagement.Validation.ValidationGroups;
+import student.management.StudentManagement.Validation.OnCreate;
+import student.management.StudentManagement.Validation.OnUpdate;
 /*lombokを使うことで、いちいちgetterとsetterを書く必要がなくなる。
  * クラス宣言の前にimport lombok.Getter,import lombok.Setter,
  * @Getter,@Setterを記述することでコードが読みやすくなる。*/
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 
 @Schema(description = "受講生コース情報")
 @Getter
@@ -21,14 +21,16 @@ import java.time.format.DateTimeFormatter;
 public class StudentsCourse {
 
     /*リポジトリにidが存在するため、SQLマッピングのために必要となる。*/
+    @Null(groups = OnCreate.class, message = "新規登録時は studentId を指定しないでください。")
+    @NotNull(groups = OnUpdate.class, message = "更新時は studentId を指定してください。")
     private Integer id;
 
-    @Min(value = 1, message = "IDは1以上である必要があります。")
-    @Null(message = "新規登録時は courseId を指定しないでください。")
+    @Null(groups = OnCreate.class, message = "新規登録時は courseId を指定しないでください。")
+    @NotNull(groups = OnUpdate.class, message = "更新時は courseId を指定してください。")
     private Integer courseId;
 
-    @Min(value = 1, message = "IDは1以上である必要があります。")
-    @Null(message = "新規登録時は studentId を指定しないでください。")
+    @Null(groups = OnCreate.class, message = "新規登録時は studentId を指定しないでください。")
+    @NotNull(groups = OnUpdate.class, message = "更新時は studentId を指定してください。")
     @JsonProperty("studentId")
     @Column(name = "student_id")
     private Integer studentId;
@@ -38,8 +40,10 @@ public class StudentsCourse {
     @JsonProperty("courseName")
     private String courseName;
 
+    @JsonProperty("startDate")
     private LocalDate startDate;
 
+    @JsonProperty("endDate")
     private LocalDate endDate;
 
     /*startDateとendDateをString形式で出力するためのカスタムシリアライズ処理*/
