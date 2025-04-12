@@ -4,7 +4,7 @@ import org.apache.ibatis.annotations.*;
 import org.apache.ibatis.type.LocalDateTypeHandler;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
-import student.management.StudentManagement.StudentsWithCourses;
+import student.management.StudentManagement.data.StudentsWithCourses;
 import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
@@ -162,7 +162,7 @@ public interface StudentRepository {
      * students_courses_statusテーブルのエイリアス。DISTINCT を使用して重複する行を防ぎつつ、
      * students_courses_status テーブルからのステータス情報も取得している*/
     @Select("SELECT DISTINCT " +
-            "s.id AS student_id, s.furigana, s.nickname, s.email, s.region, s.age, s.gender, s.remark, s.isDeleted, " +
+            "s.id AS student_id, s.name AS studentName,s.furigana, s.nickname, s.email, s.region, s.age, s.gender, s.remark, s.isDeleted, " +
             "sc.id AS course_id, sc.start_date AS startDate, sc.end_date AS endDate, sc.course_name, " +
             "scs.students_courses_id, scs.status " +
             "FROM students s " +
@@ -170,6 +170,7 @@ public interface StudentRepository {
             "LEFT JOIN students_courses_status scs ON sc.id = scs.students_courses_id")
     @Results({
             @Result(property = "student.id", column = "student_id"),
+            @Result(property = "student.studentName", column = "studentName"),
             @Result(property = "student.furigana", column = "furigana"),
             @Result(property = "student.nickname", column = "nickname"),
             @Result(property = "student.email", column = "email"),
@@ -211,7 +212,7 @@ public interface StudentRepository {
             """)
     @Results({
             @Result(property = "student.id", column = "student_id"),
-            @Result(property = "student.name", column = "studentName"),
+            @Result(property = "student.studentName", column = "studentName"),
             @Result(property = "student.furigana", column = "furigana"),
             @Result(property = "student.nickname", column = "nickname"),
             @Result(property = "student.email", column = "email"),
@@ -278,6 +279,7 @@ public interface StudentRepository {
             """)
     List<Student> findStudentByGender(@Param("gender") String gender);
 
+    /*受講状況を受講生IDから取得するためのリポジトリ*/
     @Select("SELECT scs.students_courses_id, scs.status " +
             "FROM students_courses_status scs " +
             "WHERE scs.students_courses_id = #{studentId}")
@@ -321,13 +323,6 @@ public interface StudentRepository {
             @Param("courseName") String courseName
     );
 
-    /*名前のみを登録する場合*/
-    @Insert("""
-            INSERT INTO students (name)
-            VALUES (#{name})
-            """)
-    void insertStudentName(@Param("name") String name);
-
     /*受講生を新規登録する。
      *IDに関しては自動採番を行う。
      *@param student 受講生*/
@@ -349,6 +344,7 @@ public interface StudentRepository {
     @Insert("INSERT INTO students_courses_status (students_courses_id, status) VALUES (#{studentsCoursesId}, #{status})")
     void registerCourseStatus(@Param("studentsCoursesId") Integer studentsCoursesId, @Param("status") String status);
 
+    /*受講生情報を受講生IDから取得する*/
     @Select("""
             SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
             FROM students
@@ -370,9 +366,6 @@ public interface StudentRepository {
     @Select("SELECT * FROM students_courses WHERE student_id = #{studentId}")
     List<StudentsCourse> findStudentCoursesById(@Param("studentId") Long studentId);
 
-    @Select("SELECT cs.status FROM students_courses sc JOIN students_courses_status cs ON sc.id = cs.students_courses_id WHERE sc.student_id = #{studentId}")
-    List<CourseStatusDTO> findByStudentId(@Param("studentId") Integer studentId);
-
     /*コース情報と受講状況を取得する*/
     @Select("SELECT sc.id, sc.student_id, sc.course_name, sc.start_date, sc.end_date, cs.status " +
             "FROM students_courses sc " +
@@ -389,7 +382,6 @@ public interface StudentRepository {
                 WHERE sc.student_id = #{studentId}
             """)
     List<CourseStatusDTO> findCourseStatusesByStudentId(@Param("studentId") Integer studentId);
-
 
     /*受講生情報を更新する。
      * @param student 受講生*/
