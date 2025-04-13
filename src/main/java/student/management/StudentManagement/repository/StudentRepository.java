@@ -415,12 +415,14 @@ public interface StudentRepository {
             """)
     int updateStudentCourse(StudentsCourse studentsCourse);
 
+    /*受講生コース情報の登録を行う*/
     @Insert("""
                 INSERT INTO students_courses (student_id, course_name, start_date, end_date)
                 VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
             """)
     int insertStudentsCourses(StudentsCourse studentsCourse);
 
+    /*受講生詳細情報を受講生IDから取得する*/
     @Select("""
                 SELECT
                     id,
@@ -440,6 +442,7 @@ public interface StudentRepository {
             """)
     StudentDetail findStudentDetailById(@Param("id") Long id);
 
+    /*論理削除を行う*/
     @Update("UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}")
     void updateIsDeleted(@Param("id") Long id, @Param("isDeleted") boolean isDeleted);
 }

@@ -23,3 +23,4 @@ public class StudentsWithCourses {
     private Date startDate;
     private Date endDate;
 }
+/*受講生と*/

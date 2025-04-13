@@ -253,7 +253,6 @@ public class StudentService {
         return studentDetails;
     }
 
-
     public StudentDetail getStudentDetail(Long studentId) {
         Student student = repository.findStudentById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found"));
