@@ -33,7 +33,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
     }
 
-    /*受講競情報更新時の例外処理。400 Bad Requestを表示させる*/
+    /*受講生情報更新時の例外処理。400 Bad Requestを表示させる*/
     @ExceptionHandler(StudentUpdateException.class)
     public ResponseEntity<String> handleStudentUpdateException(StudentUpdateException ex) {
         logger.error("更新エラー: {}", ex.getMessage());
@@ -61,8 +61,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
+                errors.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest().body(errors);
     }
 

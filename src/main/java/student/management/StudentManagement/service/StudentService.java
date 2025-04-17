@@ -5,15 +5,17 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
-import student.management.StudentManagement.StudentsWithCourses;
+import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 import student.management.StudentManagement.domain.StudentDetail;
 import student.management.StudentManagement.repository.StudentRepository;
+import org.apache.ibatis.session.SqlSession;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -21,8 +23,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,6 +45,8 @@ public class StudentService {
      * オーバーライドできなくなる。コンストラクタの宣言にfinalを使用することはない*/
 
     @Autowired
+    private JdbcTemplate jdbcTemplate;
+    private SqlSession sqlsession;
 
     public StudentService(StudentRepository repository, StudentConverter converter) {
         this.repository = repository;
@@ -52,35 +59,198 @@ public class StudentService {
     /*受講生一覧詳細検索機能。
      * 全件検索を行うため、条件指定は行わない。
      * @return 受講生一覧（全件検索）*/
-    public List<StudentDetail> searchStudentList() {
-        List<Student> studentList = repository.searchAllStudents();
+    public List<StudentDetail> getAllStudents() {
+        // 全学生情報を取得
+        List<Student> students = repository.findAllStudents();
 
-        List<StudentsCourse> studentCourseList = repository.searchAllCoursesList();
-        studentList.forEach(student -> System.out.println("Repository Output: " + student));
-        List<StudentDetail> studentDetails = converter.convertStudentDetails(studentList, studentCourseList);
-        studentDetails.forEach(detail -> System.out.println("Converted Detail: " + detail));
-        return converter.convertStudentDetails(studentList, studentCourseList);
+        // 学生ごとに詳細情報をセット
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        for (Student student : students) {
+            // 受講情報（仮申込）を取得
+            List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
+
+            // 最新の受講ステータス（本申込）を取得
+            List<CourseStatusDTO> courseStatuses = repository.getCourseStatuses(student.getId());
+
+            // StudentDetail を作成
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student);
+            studentDetail.setStudentCourseList(studentsCourses);
+            studentDetail.setCourseStatuses(courseStatuses);
+
+            studentDetails.add(studentDetail);
+        }
+
+        return studentDetails;
     }
 
-    public int updateStudentsCourses(StudentsCourse studentsCourses) {
-        log.debug("Updating StudentsCourses: {}", studentsCourses);
-        return repository.updateStudentCourse(studentsCourses);
+    /*受講生の全ての情報を取得する。ただしisDeletedがtrueの受講生情報は除外する*/
+    public List<StudentDetail> getAllStudentsWithCourseStatuses() {
+        List<Student> students = repository.findAllStudents();
+
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        for (Student student : students) {
+            // 'isDeleted' が true の場合はその学生を除外
+            if (student.getIsDeleted()) {
+                continue; // この学生をスキップ
+            }
+
+            // 学生のコース情報を取得
+            List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
+
+            // 最新の受講ステータスを取得
+            List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(student.getId());
+
+            // StudentDetail を作成
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student); // 学生情報をセット
+            studentDetail.setStudentCourseList(studentsCourses); // コース情報をセット
+            studentDetail.setCourseStatuses(courseStatuses); // 最新の受講ステータスをセット
+
+            studentDetails.add(studentDetail);
+        }
+
+        return studentDetails;
+    }
+
+    public List<Student> getStudentByGender(String gender) {
+        log.info("Searching students with gender: {}", gender);  // genderパラメータのログ
+        if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
+            throw new IllegalArgumentException("Invalid gender value");
+        }
+        return repository.findStudentByGender(gender);
     }
 
     /*受講生詳細検索。
      * IDに紐づく任意の受講生の情報を取得する。
      * @param id 受講生ID
      * @return 受講生詳細*/
-    public StudentDetail searchStudent(Long id) {
-        Student student = repository.searchStudent(id);
+    public StudentDetail searchStudent(Integer studentId, String gender) {
+        List<Student> students = new ArrayList<>();
 
-        // student.getId() を Long 型に変換
-        List<StudentsCourse> studentCourse = repository.searchAllCourse(Long.valueOf(student.getId()));
-        return new StudentDetail(student, studentCourse);
+        if (studentId != null) {
+            Long studentIdLong = studentId.longValue();
+            Optional<Student> optionalStudent = repository.findStudentById(studentIdLong);
+            optionalStudent.ifPresent(students::add);
+        } else if (gender != null) {
+            students = repository.findStudentByGender(gender);
+        } else {
+            throw new IllegalArgumentException("Either studentId or gender must be provided.");
+        }
+
+        if (students.isEmpty()) {
+            return null;
+        }
+
+        // ログを追加して studentName を確認
+        log.info("Student name: {}", students.get(0).getStudentName());
+
+        List<StudentsCourse> studentsCourses = repository.getStudentCourses(students.get(0).getId());
+        List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(students.get(0).getId());
+
+        // StudentDetail を作成
+        StudentDetail studentDetail = new StudentDetail(students.get(0), studentsCourses, courseStatuses);  // 名前もセットされる
+
+        return studentDetail;
     }
 
-    public List<StudentsWithCourses> searchStudentsWithCourses() {
-        return repository.searchStudentsWithCourses();
+
+    /*特定の性別の受講生情報を全て取得する*/
+    public List<StudentDetail> searchStudentsByGender(String gender) {
+        // 性別が無効な場合はエラーをスロー
+        if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
+            throw new IllegalArgumentException("Invalid gender value");
+        }
+
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        // 性別で学生を検索
+        List<Student> students = repository.findStudentByGender(gender);
+
+        if (students.isEmpty()) {
+            throw new IllegalArgumentException("No students found for the given gender.");
+        }
+
+        // 各学生に対して、コース情報と受講ステータスを取得
+        for (Student student : students) {
+            List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
+            List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(student.getId());
+
+            // StudentDetail を作成
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student); // 学生情報をセット
+            studentDetail.setStudentCourseList(studentsCourses); // コース情報をセット
+            studentDetail.setCourseStatuses(courseStatuses); // 最新の受講ステータスをセット
+
+            studentDetails.add(studentDetail);
+        }
+
+        return studentDetails;
+    }
+
+    /*StudentをStudentDetailに変更するメソッド*/
+    private StudentDetail convertToStudentDetail(Student student) {
+        StudentDetail detail = new StudentDetail();
+        detail.setStudent(student);
+        detail.setStudentCourseList(new ArrayList<>()); // 必要ならリストを初期化
+        return detail;
+    }
+
+    public StudentDetail searchStudentById(Integer studentId) {
+        // 学生をIDで検索
+        Student student = repository.findStudentById(studentId.longValue())
+                .orElseThrow(() -> new NoSuchElementException("Student not found with ID: " + studentId));
+
+        // 学生の受講コースを取得して変換
+        List<StudentsCourse> studentCourseList = repository.getStudentCourses(student.getId()).stream()
+                .map(dto -> new StudentsCourse(
+                        dto.getId(),
+                        dto.getStartDate(),  // String型の日付
+                        dto.getEndDate(),    // String型の日付
+                        dto.getStatus(),
+                        dto.getStudentId(),
+                        dto.getCourseName()))
+                .collect(Collectors.toList());  // List<StudentsCourse>に変換
+
+        // コースステータスを取得
+        List<CourseStatusDTO> courseStatusList = repository.getCourseStatuses(student.getId());
+
+        // StudentDetailを返す
+        return new StudentDetail(student, studentCourseList, courseStatusList);
+    }
+
+    public List<CourseStatusDTO> getCourseStatuses(Integer studentId) {
+        if (studentId == null) {
+            throw new IllegalArgumentException("studentId cannot be null");
+        }
+
+        // sqlSession を使ってクエリを実行
+        return sqlsession.selectList("StudentManagementMapper.getCourseStatuses", studentId);
+    }
+
+    /*特定のコース名の受講生情報を全て取得する*/
+    public List<StudentDetail> searchStudentsByCourseName(String courseName) {
+        List<Student> students = repository.findStudentsByCourseName(courseName);
+        List<StudentDetail> studentDetails = new ArrayList<>();
+
+        for (Student student : students) {
+            List<StudentsCourse> studentsCourses = repository.getStudentCourses(student.getId());
+
+            log.info("Student Courses for {}: {}", student.getStudentName(), studentsCourses);
+
+            List<CourseStatusDTO> courseStatuses = repository.getLatestCourseStatus(student.getId());
+
+            StudentDetail studentDetail = new StudentDetail();
+            studentDetail.setStudent(student);
+            studentDetail.setStudentCourseList(studentsCourses);
+            studentDetail.setCourseStatuses(courseStatuses);
+
+            studentDetails.add(studentDetail);
+        }
+
+        return studentDetails;
     }
 
     public StudentDetail getStudentDetail(Long studentId) {
@@ -96,7 +266,6 @@ public class StudentService {
 
         return details.get(0);
     }
-
 
     public List<Student> fetchStudentsFromApi() {
         try {
@@ -143,43 +312,44 @@ public class StudentService {
             Student student = studentDetail.getStudent();
             repository.registerStudent(student);
 
-            // データベースで生成されたIDを取得
             Integer generatedId = student.getId();
             if (generatedId == null) {
                 throw new IllegalStateException("Student ID was not generated after registration.");
             }
 
-            // `Integer` → `Long` に変換
             Long generatedIdLong = generatedId.longValue();
 
-            // 受講コース情報を登録
+            // 受講コース情報とステータスを登録
             if (studentDetail.getStudentCourseList() != null) {
                 studentDetail.getStudentCourseList().forEach(studentsCourses -> {
                     initStudentsCourses(studentsCourses, generatedId);
                     repository.registerStudentCourse(studentsCourses);
+
+                    // 受講状況（CourseStatusDTO）の登録
+                    if (studentsCourses.getStatus() != null) {
+                        repository.registerCourseStatus(studentsCourses.getId(), studentsCourses.getStatus());
+                    }
                 });
             }
 
-            // データベースから最新の Student を取得
+            // 最新のStudentを取得し、詳細を返す
             Optional<Student> savedStudentOptional = repository.findStudentById(generatedIdLong);
             if (savedStudentOptional.isPresent()) {
                 Student savedStudent = savedStudentOptional.get();
                 List<StudentsCourse> studentCourses = repository.findStudentCoursesById(generatedIdLong);
-                return new StudentDetail(savedStudent, studentCourses);
+
+                // StudentDetailの返却
+                List<CourseStatusDTO> courseStatuses = getStudentCourseStatus(generatedId); // ステータスも取得
+                return new StudentDetail(savedStudent, studentCourses, courseStatuses);
             } else {
                 throw new IllegalStateException("Failed to retrieve the registered student.");
             }
-        } catch (IllegalArgumentException e) {
-            log.error("IllegalArgumentException during registration: {}", e.getMessage(), e);
-            throw e;  // 再スローしてテストで捕える
-        } catch (IllegalStateException e) {
-            log.error("IllegalStateException during registration: {}", e.getMessage(), e);
-            throw e;  // 再スローしてテストで捕える
         } catch (Exception e) {
             log.error("Unexpected error occurred during student registration: {}", e.getMessage(), e);
             throw new RuntimeException("Unexpected error during registration.", e);
         }
     }
+
 
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報
@@ -189,6 +359,21 @@ public class StudentService {
         LocalDate now = LocalDate.now();
         studentCourse.setStartDate(now);
         studentCourse.setEndDate(now.plusYears(1));
+    }
+
+    /*受講生のコース受講状況を取得する*/
+    public List<CourseStatusDTO> getStudentCourseStatus(Integer studentId) {
+        return repository.findStudentCourseStatus(studentId);
+    }
+
+    /*受講生のコース受講状況を更新する*/
+    @Transactional
+    public void updateStudentCourseStatus(Integer studentsCoursesId, String status) {
+        repository.updateStudentCourseStatus(studentsCoursesId, status);
+    }
+
+    public List<CourseStatusDTO> getCourseStatusesByStudentId(Integer studentId) {
+        return repository.getCourseStatusesByStudentId(studentId);
     }
 
     public void markAsDeleted(Long studentId) {

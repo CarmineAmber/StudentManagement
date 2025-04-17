@@ -1,4 +1,4 @@
-package student.management.StudentManagement;
+package student.management.StudentManagement.data;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -23,3 +23,4 @@ public class StudentsWithCourses {
     private Date startDate;
     private Date endDate;
 }
+/*受講生と*/
