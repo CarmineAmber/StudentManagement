@@ -156,7 +156,6 @@ public class StudentService {
         return studentDetail;
     }
 
-
     /*特定の性別の受講生情報を全て取得する*/
     public List<StudentDetail> searchStudentsByGender(String gender) {
         // 性別が無効な場合はエラーをスロー
@@ -297,7 +296,7 @@ public class StudentService {
     }
 
     /*受講生詳細の登録を行う。
-     *受講生と受オク生コース情報を個別に登録し、受講生コース情報には受講生情報を
+     *受講生と受講生コース情報を個別に登録し、受講生コース情報には受講生情報を
      *紐づける値とコース開始日、コース終了日を設定する。
      *@param studentDetail 受講生詳細
      *@return 登録情報を付与した受講生詳細*/
@@ -324,10 +323,15 @@ public class StudentService {
                 studentDetail.getStudentCourseList().forEach(studentsCourses -> {
                     initStudentsCourses(studentsCourses, generatedId);
                     repository.registerStudentCourse(studentsCourses);
+                    log.info("Registered course ID: {}", studentsCourses.getId());
 
                     // 受講状況（CourseStatusDTO）の登録
-                    if (studentsCourses.getStatus() != null) {
+                    if (studentsCourses.getId() != null && studentsCourses.getStatus() != null) {
+                        log.info("Registering course status for course ID {}: {}", studentsCourses.getId(), studentsCourses.getStatus());
                         repository.registerCourseStatus(studentsCourses.getId(), studentsCourses.getStatus());
+                        log.info("Registered status for course ID {}: {}", studentsCourses.getId(), studentsCourses.getStatus());
+                    } else {
+                        log.warn("Status is null for course ID {}", studentsCourses.getId());
                     }
                 });
             }
@@ -349,6 +353,7 @@ public class StudentService {
             throw new RuntimeException("Unexpected error during registration.", e);
         }
     }
+
 
 
     /*受講生コース情報を登録する際の初期情報を設定する。

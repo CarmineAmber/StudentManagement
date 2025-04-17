@@ -134,7 +134,10 @@ public interface StudentRepository {
 
     /*コース受講状況を取得。常に最新のものを取得する*/
     @Select("""
-            SELECT sc.id AS studentsCoursesId, sc.course_name AS courseName, latest_status.status, sc.id AS courseId
+            SELECT sc.id AS studentsCoursesId,\s
+                   sc.course_name AS courseName,\s
+                   COALESCE(latest_status.status, '未登録') AS status,\s
+                   sc.id AS courseId
             FROM students_courses sc
             LEFT JOIN (
                 SELECT scs1.students_courses_id, scs1.status
@@ -352,7 +355,6 @@ public interface StudentRepository {
             """)
     Optional<Student> findStudentById(@Param("id") Long id);
 
-
     /*受講生情報、コース情報、受講情報全てを取得する。*/
     @Query("SELECT s FROM Student s JOIN FETCH s.studentCourses sc JOIN FETCH sc.course")
     List<Student> findAllStudentsWithCourseStatus();
@@ -407,13 +409,14 @@ public interface StudentRepository {
     @Update("""
                 UPDATE students_courses
                 SET
-                course_name = #{courseName},
-                start_date = #{startDate},
-                end_date = #{endDate}
+                    course_name = #{courseName},
+                    start_date = #{startDate},
+                    end_date = #{endDate}
                 WHERE
-                id = #{courseId}
+                    id = #{id}
             """)
     int updateStudentCourse(StudentsCourse studentsCourse);
+
 
     /*受講生コース情報の登録を行う*/
     @Insert("""
