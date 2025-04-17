@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>受講生情報更新</title>
+</head>
+<body>
+<h1>受講生情報更新</h1>
+<form th:action="@{/student/{id}(id=${studentDetail.student.id})}" th:object="${studentDetail}" method="post">
+    <!--student/idページに飛ぶようにしている。そのidはStudentDetailクラスのstudentのidである-->
+    <div>
+        <label for="studentId">ID：</label>
+        <input type="text" id="studentId" th:field="*{student.id}" readonly />
+    </div>
+    <!--idを表示して、readonly(読み取り専用属性)にすることで、更新がうまくいった。
+    これは学生情報を更新する際に正しい ID を保持したままデータベースを更新できるということである-->
+    <div>
+        <label for="studentName">名前：</label>
+        <input type="text" id="studentName" th:field="*{student.studentName}" required />
+    </div>
+    <div>
+        <label for="furigana">カナ名：</label>
+        <input type="text" id="furigana" th:field="*{student.furigana}" required />
+    </div>
+    <div>
+        <label for="nickname">ニックネーム：</label>
+        <input type="text" id="nickname" th:field="*{student.nickname}" required />
+    </div>
+    <div>
+        <label for="email">メールアドレス：</label>
+        <input type="email" id="email" th:field="*{student.email}" required />
+    </div>
+    <div>
+        <label for="region">地域：</label>
+        <input type="text" id="region" th:field="*{student.region}" required />
+    </div>
+    <div>
+        <label for="age">年齢：</label>
+        <input type="number" id="age" th:field="*{student.age}" />
+    </div>
+    <div>
+        <label for="gender">性別：</label>
+        <input type="text" id="gender" th:field="*{student.gender}" />
+    </div>
+    <div>
+        <label for="remark">備考：</label>
+        <input type="text" id="remark" th:field="*{student.remark}" />
+    </div>
+    
+    <div th:if="${studentDetail.studentsCourses != null}">
+        <div th:each="course, stat : ${studentDetail.studentsCourses}">
+            <label for="courseName" th:for="*{studentsCourses[__${stat.index}__].courseName}">受講コース名：</label>
+            <input type="text" th:id="*{studentsCourses[__${stat.index}__].courseName}"
+                   th:field="*{studentsCourses[__${stat.index}__].courseName}" />
+        </div>
+        <!--${stat.index}はループや他のコンテキストで使用可能なオブジェクトを示し、その中のindexプロパティを
+        参照している。つまりこのコードでは、ラベルでStudentRepositoryのcourseNameをループさせ、テキストボックスで
+        studentsCourses.htmlのcourseNameのidとフィールド内のstudentsCourses.htmlの内容をループさせ、
+        その状態でstudentIdをhtmlに入れることでそのidの受講生データが出てくる-->
+    </div>
+    <div th:if="${studentDetail.studentsCourses == null or studentDetail.studentsCourses.isEmpty()}">
+        <label for="courseName">受講コース名：</label>
+        <input type="text" id="courseName" th:field="*{studentsCourses[0].courseName}" />
+    </div>
+    <!--この受講コース名のdivはコース名が登録されているかいないかでパターンを分けている。コース名が
+    登録されている場合、studentDetail内のstudentCoursesに登録されているコース名をテキストボックスに
+    表示し、登録されていない場合はth:field="*{studentsCourses[0].courseName}"で空のテキスト
+    ボックスを表示させている-->
+
+    <div>
+        <label for="isDeleted">登録キャンセル：</label>
+        <input type="checkbox" id="isDeleted" th:field="*{student.isDeleted}" />
+    </div>
+    <div>
+        <button type="submit">更新</button>
+    </div>
+</form>
+</body>
+</html>
+<!--th:はthymeleafがないと使用できない。-->
