@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="student.management.StudentManagement.repository.StudentRepository">
+
+    <!-- 受講生一覧検索 -->
+    <select id="searchAllStudents" resultType="student.management.StudentManagement.data.Student">
+        SELECT * FROM students
+    </select>
+
+    <!-- IDで受講生検索 -->
+    <select id="searchStudent" parameterType="long" resultType="student.management.StudentManagement.data.Student">
+        SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+        FROM students
+        WHERE id = #{id}
+    </select>
+
+    <!-- 受講生のコース情報全件検索 -->
+    <select id="searchAllCoursesList" resultType="student.management.StudentManagement.data.StudentsCourse">
+        SELECT sc.id AS courseId, sc.course_name AS courseName, sc.start_date AS startDate,
+        sc.end_date AS endDate, sc.student_id AS studentId
+        FROM students_courses sc
+        LEFT JOIN students s ON sc.student_id = s.id
+    </select>
+
+    <!-- 受講生IDに紐づく受講生コース検索 -->
+    <select id="searchAllCourse" parameterType="long" resultType="student.management.StudentManagement.data.StudentsCourse">
+        SELECT * FROM students_courses WHERE student_id = #{studentId}
+    </select>
+
+    <!-- isDeletedがfalseの受講生検索 -->
+    <select id="searchStudents" resultType="student.management.StudentManagement.data.Student">
+        SELECT id, name AS studentName, furigana, nickname, email, region, age, gender, remark, isdeleted
+        FROM students WHERE isdeleted = false
+    </select>
+
+    <!-- 受講生とコース情報を結合 -->
+    <select id="searchStudentsWithCourses" resultType="student.management.StudentManagement.StudentsWithCourses">
+        SELECT s.id AS studentId, s.name AS studentName, s.furigana, s.nickname AS nickName,
+        s.email, s.region, s.age, s.gender, sc.course_name AS courseName,
+        sc.start_date AS startDate, sc.end_date AS endDate
+        FROM students s
+        LEFT JOIN students_courses sc ON s.id = sc.student_id
+    </select>
+
+    <!-- 特定のコース名の受講生取得 -->
+    <select id="searchStudentsByCourseName" resultType="student.management.StudentManagement.StudentsWithCourses">
+        SELECT s.id AS studentId, s.name AS studentName, s.furigana, s.nickname AS nickName,
+        s.email, s.region, s.age, s.gender, sc.course_name AS courseName,
+        sc.start_date AS startDate, sc.end_date AS endDate
+        FROM students s
+        JOIN students_courses sc ON s.id = sc.student_id
+        WHERE sc.course_name = #{courseName}
+    </select>
+
+    <!-- 名前のみを登録 -->
+    <insert id="insertStudentName" parameterType="string">
+        INSERT INTO students (name) VALUES (#{name})
+    </insert>
+
+    <!-- 受講生登録 -->
+    <insert id="registerStudent" parameterType="student.management.StudentManagement.data.Student" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO students (name, furigana, nickname, email, region, age, gender, remark)
+        VALUES (#{studentName}, #{furigana}, #{nickname}, #{email}, #{region}, #{age}, #{gender}, #{remark})
+    </insert>
+
+    <!-- 受講生コース登録 -->
+    <insert id="registerStudentCourse" parameterType="student.management.StudentManagement.data.StudentsCourse">
+        INSERT INTO students_courses (student_id, course_name, start_date, end_date)
+        VALUES (#{studentId}, #{courseName}, #{startDate}, #{endDate})
+    </insert>
+
+    <!-- IDで受講生取得 -->
+    <select id="findStudentById" parameterType="long" resultType="student.management.StudentManagement.data.Student">
+        SELECT id, name, furigana, nickname, email, region, age, gender, remark, isdeleted
+        FROM students WHERE id = #{id}
+    </select>
+
+    <!-- IDで受講生コース取得 -->
+    <select id="findCoursesByStudentId" parameterType="long" resultType="student.management.StudentManagement.data.StudentsCourse">
+        SELECT id AS courseId, course_name AS courseName, start_date AS startDate, end_date AS endDate
+        FROM students_courses WHERE student_id = #{studentId}
+    </select>
+
+    <!-- 受講生情報更新 -->
+    <update id="updateStudent" parameterType="student.management.StudentManagement.data.Student">
+        UPDATE students
+        SET name = #{studentName}, furigana = #{furigana}, nickname = #{nickname},
+        email = #{email}, region = #{region}, age = #{age}, gender = #{gender},
+        remark = #{remark}, isdeleted = COALESCE(#{isDeleted}, false)
+        WHERE id = #{id}
+    </update>
+
+    <!-- isDeletedフラグ更新 -->
+    <update id="updateIsDeleted" parameterType="map">
+        UPDATE students SET isdeleted = #{isDeleted} WHERE id = #{id}
+    </update>
+
+</mapper>
