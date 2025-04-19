@@ -115,6 +115,7 @@ public class StudentService {
         return studentDetails;
     }
 
+    /*性別から受講生を検索する*/
     public List<Student> getStudentByGender(String gender) {
         log.info("Searching students with gender: {}", gender);  // genderパラメータのログ
         if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
@@ -187,14 +188,6 @@ public class StudentService {
         }
 
         return studentDetails;
-    }
-
-    /*StudentをStudentDetailに変更するメソッド*/
-    private StudentDetail convertToStudentDetail(Student student) {
-        StudentDetail detail = new StudentDetail();
-        detail.setStudent(student);
-        detail.setStudentCourseList(new ArrayList<>()); // 必要ならリストを初期化
-        return detail;
     }
 
     public StudentDetail searchStudentById(Integer studentId) {
@@ -353,8 +346,6 @@ public class StudentService {
             throw new RuntimeException("Unexpected error during registration.", e);
         }
     }
-
-
 
     /*受講生コース情報を登録する際の初期情報を設定する。
      *@param studentsCourses 受講生コース情報

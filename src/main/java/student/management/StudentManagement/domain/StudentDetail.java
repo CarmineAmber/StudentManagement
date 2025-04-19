@@ -30,10 +30,13 @@ public class StudentDetail {
     @Valid
     private List<CourseStatusDTO> courseStatuses;
 
+    /*検索やフィルター用の条件保持用フィールド。
+    * 性別、コース名、受講状況による絞り込みのために使用する*/
     private String gender;
     private String courseName;
     private String courseStatus;
 
+    /*主要なフィールド（Student,StudentsCourse,CourseStatusDTOを初期化するためのコンストラクタ*/
     public StudentDetail(Student student, List<StudentsCourse> studentCourseList, List<CourseStatusDTO> courseStatuses) {
         this.student = student;
         this.studentCourseList = studentCourseList;

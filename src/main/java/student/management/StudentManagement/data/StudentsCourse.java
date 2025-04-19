@@ -30,12 +30,12 @@ public class StudentsCourse {
     * studentIdは受講生ID、courseIdはコースのIDである。*/
     @Null(groups = OnCreate.class, message = "新規登録時は studentId を指定しないでください。")
     @NotNull(groups = OnUpdate.class, message = "更新時は studentId を指定してください。")
+    @Column(name = "id")
     private Integer id;
 
     @JsonProperty("courseId")
     @Null(groups = OnCreate.class, message = "新規登録時は courseId を指定しないでください。")
     @NotNull(groups = OnUpdate.class, message = "更新時は courseId を指定してください。")
-    @Column(name = "id")
     private Integer courseId;
 
     @Null(groups = OnCreate.class, message = "新規登録時は studentId を指定しないでください。")

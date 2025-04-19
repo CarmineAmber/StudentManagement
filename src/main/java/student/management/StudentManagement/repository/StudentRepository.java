@@ -248,8 +248,7 @@ public interface StudentRepository {
             """)
     List<StudentsCourse> getStudentCourses(Integer studentId);
 
-
-    /*受講生の受講状況を取得する*/
+    /*受講生の最新の受講状況を取得する*/
     @Select("""
             SELECT scs.students_courses_id AS studentsCoursesId, sc.course_name AS courseName, scs.status, s.name AS studentName
             FROM students_courses_status scs
@@ -261,7 +260,6 @@ public interface StudentRepository {
             LIMIT 1               -- 最新の 1 件のみ取得
             """)
     List<CourseStatusDTO> getCourseStatuses(@Param("studentId") Integer studentId);
-    // 引数を studentId に変更
 
     /*受講生の最新の受講状況を取得する*/
     @Select("""
@@ -345,7 +343,7 @@ public interface StudentRepository {
 
     /*受講生コース受講状況を新規登録する。*/
     @Insert("INSERT INTO students_courses_status (students_courses_id, status) VALUES (#{studentsCoursesId}, #{status})")
-    void registerCourseStatus(@Param("studentsCoursesId") Integer studentsCoursesId, @Param("status") String status);
+    int registerCourseStatus(@Param("studentsCoursesId") Integer studentsCoursesId, @Param("status") String status);
 
     /*受講生情報を受講生IDから取得する*/
     @Select("""
@@ -416,7 +414,6 @@ public interface StudentRepository {
                     id = #{id}
             """)
     int updateStudentCourse(StudentsCourse studentsCourse);
-
 
     /*受講生コース情報の登録を行う*/
     @Insert("""

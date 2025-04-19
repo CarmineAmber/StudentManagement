@@ -191,10 +191,11 @@ public class StudentRepositoryTest {
 
     @Test
     void 受講状況を更新する () {
-        doNothing().when(repository).registerCourseStatus(1, "本申込");
-
+        when(repository.registerCourseStatus(1, "本申込")).thenReturn(1);
         assertDoesNotThrow(() -> repository.registerCourseStatus(1, "本申込"));
     }
+    /*registerCourseStatusはvoidでないため、doNothingが使えない。
+    * thenReturn(1)は、成功を返すという意味*/
 
     @Test
     void 受講生IDから受講生名とコース情報を取得する() {

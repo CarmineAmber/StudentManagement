@@ -12,5 +12,5 @@ public class CourseStatusUpdateRequest {
     private Integer studentsCoursesId;
     private String status;
 }
-/*受講生の受講状況を更新するためのクラス。パラメータをリクエストボディで送信するために
+/*受講生の最新の受講状況を更新するためのクラス。パラメータをリクエストボディで送信するために
 * このクラスを作成している*/
