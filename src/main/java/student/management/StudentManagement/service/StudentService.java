@@ -93,7 +93,7 @@ public class StudentService {
 
         for (Student student : students) {
             // 'isDeleted' が true の場合はその学生を除外
-            if (student.getIsDeleted()) {
+            if ( student.getIsDeleted() ) {
                 continue; // この学生をスキップ
             }
 
@@ -118,7 +118,7 @@ public class StudentService {
     /*性別から受講生を検索する*/
     public List<Student> getStudentByGender(String gender) {
         log.info("Searching students with gender: {}", gender);  // genderパラメータのログ
-        if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
+        if ( gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other")) ) {
             throw new IllegalArgumentException("Invalid gender value");
         }
         return repository.findStudentByGender(gender);
@@ -131,17 +131,17 @@ public class StudentService {
     public StudentDetail searchStudent(Integer studentId, String gender) {
         List<Student> students = new ArrayList<>();
 
-        if (studentId != null) {
+        if ( studentId != null ) {
             Long studentIdLong = studentId.longValue();
             Optional<Student> optionalStudent = repository.findStudentById(studentIdLong);
             optionalStudent.ifPresent(students::add);
-        } else if (gender != null) {
+        } else if ( gender != null ) {
             students = repository.findStudentByGender(gender);
         } else {
             throw new IllegalArgumentException("Either studentId or gender must be provided.");
         }
 
-        if (students.isEmpty()) {
+        if ( students.isEmpty() ) {
             return null;
         }
 
@@ -160,7 +160,7 @@ public class StudentService {
     /*特定の性別の受講生情報を全て取得する*/
     public List<StudentDetail> searchStudentsByGender(String gender) {
         // 性別が無効な場合はエラーをスロー
-        if (gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other"))) {
+        if ( gender == null || gender.isEmpty() || (!gender.equalsIgnoreCase("Male") && !gender.equalsIgnoreCase("Female") && !gender.equalsIgnoreCase("Other")) ) {
             throw new IllegalArgumentException("Invalid gender value");
         }
 
@@ -169,7 +169,7 @@ public class StudentService {
         // 性別で学生を検索
         List<Student> students = repository.findStudentByGender(gender);
 
-        if (students.isEmpty()) {
+        if ( students.isEmpty() ) {
             throw new IllegalArgumentException("No students found for the given gender.");
         }
 
@@ -214,7 +214,7 @@ public class StudentService {
     }
 
     public List<CourseStatusDTO> getCourseStatuses(Integer studentId) {
-        if (studentId == null) {
+        if ( studentId == null ) {
             throw new IllegalArgumentException("studentId cannot be null");
         }
 
@@ -296,7 +296,7 @@ public class StudentService {
     @Transactional
     public StudentDetail registerStudent(@Valid StudentDetail studentDetail) {
         try {
-            if (studentDetail == null || studentDetail.getStudent() == null) {
+            if ( studentDetail == null || studentDetail.getStudent() == null ) {
                 throw new IllegalArgumentException("StudentDetail or Student cannot be null.");
             }
 
@@ -305,21 +305,21 @@ public class StudentService {
             repository.registerStudent(student);
 
             Integer generatedId = student.getId();
-            if (generatedId == null) {
+            if ( generatedId == null ) {
                 throw new IllegalStateException("Student ID was not generated after registration.");
             }
 
             Long generatedIdLong = generatedId.longValue();
 
             // 受講コース情報とステータスを登録
-            if (studentDetail.getStudentCourseList() != null) {
+            if ( studentDetail.getStudentCourseList() != null ) {
                 studentDetail.getStudentCourseList().forEach(studentsCourses -> {
                     initStudentsCourses(studentsCourses, generatedId);
                     repository.registerStudentCourse(studentsCourses);
                     log.info("Registered course ID: {}", studentsCourses.getId());
 
                     // 受講状況（CourseStatusDTO）の登録
-                    if (studentsCourses.getId() != null && studentsCourses.getStatus() != null) {
+                    if ( studentsCourses.getId() != null && studentsCourses.getStatus() != null ) {
                         log.info("Registering course status for course ID {}: {}", studentsCourses.getId(), studentsCourses.getStatus());
                         repository.registerCourseStatus(studentsCourses.getId(), studentsCourses.getStatus());
                         log.info("Registered status for course ID {}: {}", studentsCourses.getId(), studentsCourses.getStatus());
@@ -331,7 +331,7 @@ public class StudentService {
 
             // 最新のStudentを取得し、詳細を返す
             Optional<Student> savedStudentOptional = repository.findStudentById(generatedIdLong);
-            if (savedStudentOptional.isPresent()) {
+            if ( savedStudentOptional.isPresent() ) {
                 Student savedStudent = savedStudentOptional.get();
                 List<StudentsCourse> studentCourses = repository.findStudentCoursesById(generatedIdLong);
 

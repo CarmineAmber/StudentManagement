@@ -78,7 +78,7 @@ public class StudentController {
             @Valid @RequestBody StudentDetail studentDetail,
             BindingResult bindingResult) {
 
-        if (bindingResult.hasErrors()) {
+        if ( bindingResult.hasErrors() ) {
             Map<String, String> errors = new HashMap<>();
             bindingResult.getAllErrors().forEach(error -> {
                 String fieldName = ((FieldError) error).getField();
@@ -103,7 +103,7 @@ public class StudentController {
     public StudentDetail searchStudent(
             @RequestParam(required = false) Integer studentId,
             @RequestParam(required = false) String gender) {  // 性別も検索条件に追加
-        if (studentId == null && gender == null) {
+        if ( studentId == null && gender == null ) {
             throw new IllegalArgumentException("studentId or gender is required");
         }
 
@@ -128,13 +128,13 @@ public class StudentController {
         return ResponseEntity.ok(studentDetails);
     }
 
-    @Operation(summary = "受講生受講状況",description = "受講生受講状況を確認する。")
+    @Operation(summary = "受講生受講状況", description = "受講生受講状況を確認する。")
     @GetMapping("/student/{studentId}/courses/status")
     public List<CourseStatusDTO> getStudentCourseStatus(@PathVariable Integer studentId) {
         return service.getStudentCourseStatus(studentId);
     }
 
-    @Operation(summary = "受講生受講状況更新",description = "受講生受講状況を更新する。")
+    @Operation(summary = "受講生受講状況更新", description = "受講生受講状況を更新する。")
     @PutMapping("/courses/status")
     public ResponseEntity<String> updateStudentCourseStatus(@RequestBody CourseStatusUpdateRequest request) {
         service.updateStudentCourseStatus(request.getStudentsCoursesId(), request.getStatus());
@@ -143,7 +143,7 @@ public class StudentController {
 
     @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
     @PutMapping("/updateStudents")
-    public ResponseEntity<?> updateStudent(@RequestBody @Validated(OnUpdate.class) StudentDetail studentDetail){
+    public ResponseEntity<?> updateStudent(@RequestBody @Validated(OnUpdate.class) StudentDetail studentDetail) {
         service.updateStudentWithCourses(studentDetail);
         return ResponseEntity.ok("Update successful");
     }

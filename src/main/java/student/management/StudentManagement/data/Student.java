@@ -28,7 +28,7 @@ public class Student {
     private Integer id;
 
     /*@NotNullと@NotBlankを使用することで、nullと""の両方をバリデーションする。
-    * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
+     * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
     @JsonProperty("studentName")
     @NotNull(message = "エラー: 名前が入力されていません。")
     @NotBlank(message = "エラー: 名前が入力されていません。")
@@ -69,7 +69,8 @@ public class Student {
     private String remark;
 
     @JsonProperty("isDeleted")
-    private Boolean isDeleted;//論理削除
+    private Boolean isDeleted;
+    /*論理削除を行う*/
 
     /*テスト用のコンストラクタ*/
     public Student(Integer id, String studentName, String furigana, String nickname,
@@ -87,9 +88,9 @@ public class Student {
     // デフォルトコンストラクタ（必須）
     public Student() {
         /*テストコードを使用する際の引数なしのデフォルトコンストラクタ。
-        * このコンストラクタは、実行される前にまず自分自身の親クラスの
-        * コンストラクタを呼び出す。つまり、Studentクラスのコンストラクタ
-        * 全般を呼び出すという動作をしている*/
+         * このコンストラクタは、実行される前にまず自分自身の親クラスの
+         * コンストラクタを呼び出す。つまり、Studentクラスのコンストラクタ
+         * 全般を呼び出すという動作をしている*/
     }
 }
 /*このprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。

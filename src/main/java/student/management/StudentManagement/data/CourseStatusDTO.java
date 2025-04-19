@@ -28,11 +28,11 @@ public class CourseStatusDTO {
     }
 
     /*これら２つのOverrideは、StudentsCoursesIdのみを元に判断し、studentsCourseIdが
-    * 同じであれば同一とみなすためのものである。*/
+     * 同じであれば同一とみなすためのものである。*/
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if ( this == obj ) return true;
+        if ( obj == null || getClass() != obj.getClass() ) return false;
         CourseStatusDTO that = (CourseStatusDTO) obj;
         return Objects.equals(studentsCoursesId, that.studentsCoursesId);  // Null-safe equals check
     }

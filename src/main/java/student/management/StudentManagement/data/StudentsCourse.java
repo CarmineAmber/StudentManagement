@@ -5,7 +5,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import student.management.StudentManagement.Validation.OnCreate;
 import student.management.StudentManagement.Validation.OnUpdate;
 /*lombokを使うことで、いちいちgetterとsetterを書く必要がなくなる。
@@ -84,12 +87,12 @@ public class StudentsCourse {
 
     private String status;
 
-    // 状態を取得
+    // 状態を取得する。Getterがあるからと言って、削除すると取得ができなくなる。
     public String getStatus() {
         return status;
     }
 
-    // 状態を設定
+    // 状態を設定する。Setterがあるからと言って、削除すると設定ができなくなる。
     public void setStatus(String status) {
         this.status = status;
     }

@@ -37,6 +37,7 @@ public class StudentRepositoryTest {
         course1 = new StudentsCourse(1, LocalDate.of(2024, 1, 1), LocalDate.of(2024, 6, 1), "仮申込", 1, "JAVA");
         course2 = new StudentsCourse(2, LocalDate.of(2024, 2, 1), LocalDate.of(2024, 7, 1), "本申込", 1, "Spring Boot");
     }
+    /*モックの初期化。テストクラスの各テストメソッドの実行前に毎回実行される。*/
 
     @Test
     void 受講生を一覧検索する() {
@@ -67,7 +68,7 @@ public class StudentRepositoryTest {
     }
 
     @Test
-    void  受講生のコース情報の全件検索を行う() {
+    void 受講生のコース情報の全件検索を行う() {
         when(repository.searchAllCoursesList()).thenReturn(List.of(course1, course2));
 
         List<StudentsCourse> result = repository.searchAllCoursesList();
@@ -144,7 +145,7 @@ public class StudentRepositoryTest {
     }
 
     @Test
-    void 受講状況を受講生IDから取得する () {
+    void 受講状況を受講生IDから取得する() {
         CourseStatusDTO dto = new CourseStatusDTO();
         dto.setStatus("受講中");
 
@@ -156,7 +157,7 @@ public class StudentRepositoryTest {
     }
 
     @Test
-    void  最新の受講状況を取得する() {
+    void 最新の受講状況を取得する() {
         CourseStatusDTO dto = new CourseStatusDTO();
         dto.setStatus("受講終了");
 
@@ -190,12 +191,12 @@ public class StudentRepositoryTest {
     }
 
     @Test
-    void 受講状況を更新する () {
+    void 受講状況を更新する() {
         when(repository.registerCourseStatus(1, "本申込")).thenReturn(1);
         assertDoesNotThrow(() -> repository.registerCourseStatus(1, "本申込"));
     }
     /*registerCourseStatusはvoidでないため、doNothingが使えない。
-    * thenReturn(1)は、成功を返すという意味*/
+     * thenReturn(1)は、成功を返すという意味*/
 
     @Test
     void 受講生IDから受講生名とコース情報を取得する() {

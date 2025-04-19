@@ -1,13 +1,19 @@
 package student.management.StudentManagement.service;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.apache.ibatis.session.SqlSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.springframework.jdbc.core.JdbcTemplate;
 import student.management.StudentManagement.Controller.converter.StudentConverter;
 import student.management.StudentManagement.data.CourseStatusDTO;
@@ -19,7 +25,10 @@ import student.management.StudentManagement.exception.StudentUpdateException;
 import student.management.StudentManagement.repository.StudentRepository;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @ExtendWith(org.mockito.junit.jupiter.MockitoExtension.class)
@@ -62,6 +71,7 @@ class StudentServiceTest {
         status = new CourseStatusDTO();
         status.setStatus("受講中");
     }
+    /*モックの初期化。テストクラスの各テストメソッドの実行前に毎回実行される。*/
 
     @Test
     void 全ての受講生の情報を取得する() {
@@ -261,6 +271,26 @@ class StudentServiceTest {
 
         // モックが期待通りに呼ばれたことを確認
         verify(repository).findStudentCourseStatus(studentId);
+    }
+
+    @Test
+    void 該当する性別の受講生が存在しない場合は空のリストを返す() {
+        /*"Other" は正しい性別だが、該当者はいないケースと仮定されている*/
+        when(repository.findStudentByGender("Other")).thenReturn(Collections.emptyList());
+
+        List<Student> result = service.getStudentByGender("Other");
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void 無効な性別を指定した場合は例外をスローする() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            service.getStudentByGender("InvalidGender");
+        });
+
+        assertEquals("Invalid gender value", exception.getMessage());
     }
 }
 

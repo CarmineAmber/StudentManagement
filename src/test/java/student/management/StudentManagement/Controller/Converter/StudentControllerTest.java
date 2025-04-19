@@ -48,7 +48,7 @@ public class StudentControllerTest {
 
     @BeforeEach
     void setUp() {
-        // モックの初期化
+        // モックの初期化。テストクラスの各テストメソッドの実行前に毎回実行される。
     }
 
     @Test

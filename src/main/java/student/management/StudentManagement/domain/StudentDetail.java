@@ -3,7 +3,10 @@ package student.management.StudentManagement.domain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
@@ -31,7 +34,7 @@ public class StudentDetail {
     private List<CourseStatusDTO> courseStatuses;
 
     /*検索やフィルター用の条件保持用フィールド。
-    * 性別、コース名、受講状況による絞り込みのために使用する*/
+     * 性別、コース名、受講状況による絞り込みのために使用する*/
     private String gender;
     private String courseName;
     private String courseStatus;
