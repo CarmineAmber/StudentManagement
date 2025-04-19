@@ -25,14 +25,10 @@ public class Student {
     @JsonProperty("id")
     @Null(groups = OnCreate.class, message = "新規登録時は id を指定しないでください。")
     @NotNull(groups = OnUpdate.class, message = "更新時は id を指定してください。")
-    /*(regexp = "^\\d+$")とは、数値のみの文字列を検証するための正規表現。
-    * ^で文字列の先頭からマッチし、\\d+で0~9までの数字を１回以上繰り返す。
-    * $は文字列の末尾でマッチする。これらはユーザー入力が整数のみであることを
-    * 確認する用途に使われる（主にIDや数量のバリデーション）*/
     private Integer id;
 
     /*@NotNullと@NotBlankを使用することで、nullと""の両方をバリデーションする。
-    * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
+     * つまり、確実にチェックに引っかかってエラーメッセージが表示されるようにしている*/
     @JsonProperty("studentName")
     @NotNull(message = "エラー: 名前が入力されていません。")
     @NotBlank(message = "エラー: 名前が入力されていません。")
@@ -73,18 +69,12 @@ public class Student {
     private String remark;
 
     @JsonProperty("isDeleted")
-    private Boolean isDeleted;//論理削除
+    private Boolean isDeleted;
+    /*論理削除を行う*/
 
-    // デフォルトコンストラクタ（必須）
-    public Student() {
-        /*テストコードを使用する際の引数なしのデフォルトコンストラクタ。
-        * このコンストラクタは、実行される前にまず自分自身の親クラスの
-        * コンストラクタを呼び出す。つまり、Studentクラスのコンストラクタ
-        * 全般を呼び出すという動作をしている*/
-    }
-
+    /*テスト用のコンストラクタ*/
     public Student(Integer id, String studentName, String furigana, String nickname,
-                   String email, String region, Integer age,String gender) {
+                   String email, String region, Integer age, String gender) {
         this.id = id;
         this.studentName = studentName;
         this.furigana = furigana;
@@ -95,8 +85,12 @@ public class Student {
         this.gender = gender;
     }
 
-    public List<StudentsCourse> getStudentCourses() {
-        return studentsCourses;
+    // デフォルトコンストラクタ（必須）
+    public Student() {
+        /*テストコードを使用する際の引数なしのデフォルトコンストラクタ。
+         * このコンストラクタは、実行される前にまず自分自身の親クラスの
+         * コンストラクタを呼び出す。つまり、Studentクラスのコンストラクタ
+         * 全般を呼び出すという動作をしている*/
     }
 }
 /*このprivate変数は、mySQLのStudentManagementテーブルから拾ってきた項目である。

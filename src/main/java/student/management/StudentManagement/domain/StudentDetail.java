@@ -3,12 +3,14 @@ package student.management.StudentManagement.domain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.Student;
 import student.management.StudentManagement.data.StudentsCourse;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Schema(description = "受講生詳細")
@@ -27,23 +29,20 @@ public class StudentDetail {
     private List<StudentsCourse> studentCourseList;
 
     @Setter
-    @JsonProperty("courseStatuses") // Add new property for course statuses
+    @JsonProperty("courseStatuses")
     @Valid
     private List<CourseStatusDTO> courseStatuses;
 
+    /*検索やフィルター用の条件保持用フィールド。
+     * 性別、コース名、受講状況による絞り込みのために使用する*/
     private String gender;
     private String courseName;
     private String courseStatus;
 
-    // 既存のコンストラクタ
+    /*主要なフィールド（Student,StudentsCourse,CourseStatusDTOを初期化するためのコンストラクタ*/
     public StudentDetail(Student student, List<StudentsCourse> studentCourseList, List<CourseStatusDTO> courseStatuses) {
         this.student = student;
         this.studentCourseList = studentCourseList;
         this.courseStatuses = courseStatuses;
     }
-    /*studentとstudentCoursesの２つのクラスに表記されているものを
-    * 繋ぎ合わせ、StudentDetailを作っている。
-    * 尚、リストがnullになることによるサーバーエラーを防ぐために
-    * new ArrayList<>を表示して初期化している。*/
-    /*ValidをStudentsCoursesにも適用することで、登録チェック漏れを防いでいる*/
 }

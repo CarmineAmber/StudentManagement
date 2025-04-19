@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.util.Date;
 
+/*受講生とコース情報を組み合わせたクラス*/
 @Getter
 @Setter
 public class StudentsWithCourses {
@@ -23,4 +24,3 @@ public class StudentsWithCourses {
     private Date startDate;
     private Date endDate;
 }
-/*受講生と*/

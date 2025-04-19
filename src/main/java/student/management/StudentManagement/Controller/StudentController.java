@@ -9,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import student.management.StudentManagement.Validation.OnUpdate;
 import student.management.StudentManagement.data.CourseStatusDTO;
 import student.management.StudentManagement.data.CourseStatusUpdateRequest;
 import student.management.StudentManagement.data.Student;
@@ -68,7 +69,7 @@ public class StudentController {
         StudentDetail savedStudent = service.registerStudent(studentDetail);
         return ResponseEntity.ok(savedStudent);
     }
-    /*public ResponseEntity<String>とするとnullになるので注意すること*/
+    /*受講生を登録したら、受講状況更新画面を開いて受講状況を仮申込にすること*/
 
     @Operation(summary = "受講生更新", description = "受講生の更新を個人検索画面から行う。")
     @PostMapping("/student/{id}")
@@ -77,7 +78,7 @@ public class StudentController {
             @Valid @RequestBody StudentDetail studentDetail,
             BindingResult bindingResult) {
 
-        if (bindingResult.hasErrors()) {
+        if ( bindingResult.hasErrors() ) {
             Map<String, String> errors = new HashMap<>();
             bindingResult.getAllErrors().forEach(error -> {
                 String fieldName = ((FieldError) error).getField();
@@ -97,13 +98,12 @@ public class StudentController {
         }
     }
 
-
     @Operation(summary = "受講生検索", description = "受講生をIDで検索する")
     @GetMapping("/student")
     public StudentDetail searchStudent(
             @RequestParam(required = false) Integer studentId,
             @RequestParam(required = false) String gender) {  // 性別も検索条件に追加
-        if (studentId == null && gender == null) {
+        if ( studentId == null && gender == null ) {
             throw new IllegalArgumentException("studentId or gender is required");
         }
 
@@ -128,13 +128,13 @@ public class StudentController {
         return ResponseEntity.ok(studentDetails);
     }
 
-    @Operation(summary = "受講生受講状況",description = "受講生受講状況を確認する。")
+    @Operation(summary = "受講生受講状況", description = "受講生受講状況を確認する。")
     @GetMapping("/student/{studentId}/courses/status")
     public List<CourseStatusDTO> getStudentCourseStatus(@PathVariable Integer studentId) {
         return service.getStudentCourseStatus(studentId);
     }
 
-    @Operation(summary = "受講生受講状況更新",description = "受講生受講状況を更新する。")
+    @Operation(summary = "受講生受講状況更新", description = "受講生受講状況を更新する。")
     @PutMapping("/courses/status")
     public ResponseEntity<String> updateStudentCourseStatus(@RequestBody CourseStatusUpdateRequest request) {
         service.updateStudentCourseStatus(request.getStudentsCoursesId(), request.getStatus());
@@ -143,25 +143,9 @@ public class StudentController {
 
     @Operation(summary = "受講生更新", description = "受講生情報を更新する。")
     @PutMapping("/updateStudents")
-    public ResponseEntity<?> updateStudent(@RequestBody @Valid StudentDetail studentDetail) {
-        log.info("Updating student: {}", studentDetail);
-
-        if (studentDetail.getStudentCourseList() != null) {
-            for (StudentsCourse course : studentDetail.getStudentCourseList()) {
-                log.info("Course info: {}", course);
-            }
-        }
-
-        service.updateStudent(studentDetail);
+    public ResponseEntity<?> updateStudent(@RequestBody @Validated(OnUpdate.class) StudentDetail studentDetail) {
+        service.updateStudentWithCourses(studentDetail);
         return ResponseEntity.ok("Update successful");
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
-        // エラーログを詳細に出力
-        log.error("エラー発生:", e);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Internal Server Error: " + e.getMessage());
     }
 }
 /*@RequestParamとは、ブラウザからのリクエストの値（パラメータ）を取得することのできるアノテーション。
@@ -172,14 +156,12 @@ public class StudentController {
  * "TEST05","email":"TEST05","region":"愛媛","age":35,"gender":"女性","courlBasic","startDate":
  * "2024-11-09T15:00:00.000+00:00","endDate":"2025-11-08T15:00:00.000+00:00"}]と出てくる）*/
 
-/*GPTを使う場合、StudentServiceで動作しない可能性がある場合はrepositoryに変更するとうまくいくようだ。*/
-
 /*GET(@GetMapping),POST(@PostMapping),PUT(@PutMapping),DELETE(@DeleteMapping)はHTTPリクエストであり、
  *アドレス可能性（URL)において何らかのアクションを起こすためのメソッド。例えばユーザー登録の場合はGETならばユーザーの
- *取得、POSTならユーザーの登録を行うということ。*/
+ *取得（つまり検索）、POSTならユーザーの登録を行うということ。*/
 /*RESTの原則：ステートレスはログイン情報を保持しないが、ステートフルはログイン情報を保持する。
 SNS等はこの２つを使い分けて機能している。基本的に現場では状況がアプリの内容によって異なるため
 その都度柔軟に考える必要がある。*/
 /*URIは階層的な構造をもたせる必要がある。そうでないと可読性が低下したりURIが複雑になる。
- *例えば、特定のユーザー情報を取得する際にはIDをURIのパラメータとして指定する必要がある。
+ *例えば、特定のユーザー情報を取得する際にはIDをURLのパラメータとして指定する必要がある。
  *chatGPTが@GetMappingにおいて("/student/{id}")と指定してきたのもこのため。*/

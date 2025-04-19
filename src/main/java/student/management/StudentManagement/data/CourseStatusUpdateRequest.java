@@ -1,4 +1,5 @@
 package student.management.StudentManagement.data;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,5 +13,5 @@ public class CourseStatusUpdateRequest {
     private Integer studentsCoursesId;
     private String status;
 }
-/*受講生の受講状況を更新するためのクラス。パラメータをリクエストボディで送信するために
-* このクラスを作成している*/
+/*受講生の最新の受講状況を更新するためのクラス。パラメータをリクエストボディで送信するために
+ * このクラスを作成している*/

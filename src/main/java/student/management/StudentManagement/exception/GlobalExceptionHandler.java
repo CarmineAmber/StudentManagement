@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/*エラーメッセージの一覧*/
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
@@ -82,7 +83,7 @@ public class GlobalExceptionHandler {
     /*PostManを使用した際に表示されるフィールド名の整形メソッド*/
     private String formatFieldName(String fieldName) {
         fieldName = fieldName.replaceAll("\\[\\d+\\]", ""); // [0] を削除
-        if (fieldName.contains(".")) {
+        if ( fieldName.contains(".") ) {
             fieldName = fieldName.substring(fieldName.lastIndexOf(".") + 1); // 最後の.以降を取得
         }
         return fieldName;

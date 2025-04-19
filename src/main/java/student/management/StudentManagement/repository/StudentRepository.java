@@ -1,6 +1,14 @@
 package student.management.StudentManagement.repository;
 
-import org.apache.ibatis.annotations.*;
+import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Many;
+import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Options;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Result;
+import org.apache.ibatis.annotations.Results;
+import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 import org.apache.ibatis.type.LocalDateTypeHandler;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
@@ -134,7 +142,10 @@ public interface StudentRepository {
 
     /*コース受講状況を取得。常に最新のものを取得する*/
     @Select("""
-            SELECT sc.id AS studentsCoursesId, sc.course_name AS courseName, latest_status.status, sc.id AS courseId
+            SELECT sc.id AS studentsCoursesId,\s
+                   sc.course_name AS courseName,\s
+                   COALESCE(latest_status.status, '未登録') AS status,\s
+                   sc.id AS courseId
             FROM students_courses sc
             LEFT JOIN (
                 SELECT scs1.students_courses_id, scs1.status
@@ -245,8 +256,7 @@ public interface StudentRepository {
             """)
     List<StudentsCourse> getStudentCourses(Integer studentId);
 
-
-    /*受講生の受講状況を取得する*/
+    /*受講生の最新の受講状況を取得する*/
     @Select("""
             SELECT scs.students_courses_id AS studentsCoursesId, sc.course_name AS courseName, scs.status, s.name AS studentName
             FROM students_courses_status scs
@@ -258,7 +268,6 @@ public interface StudentRepository {
             LIMIT 1               -- 最新の 1 件のみ取得
             """)
     List<CourseStatusDTO> getCourseStatuses(@Param("studentId") Integer studentId);
-    // 引数を studentId に変更
 
     /*受講生の最新の受講状況を取得する*/
     @Select("""
@@ -342,7 +351,7 @@ public interface StudentRepository {
 
     /*受講生コース受講状況を新規登録する。*/
     @Insert("INSERT INTO students_courses_status (students_courses_id, status) VALUES (#{studentsCoursesId}, #{status})")
-    void registerCourseStatus(@Param("studentsCoursesId") Integer studentsCoursesId, @Param("status") String status);
+    int registerCourseStatus(@Param("studentsCoursesId") Integer studentsCoursesId, @Param("status") String status);
 
     /*受講生情報を受講生IDから取得する*/
     @Select("""
@@ -351,7 +360,6 @@ public interface StudentRepository {
             WHERE id = #{id} AND isdeleted = 0
             """)
     Optional<Student> findStudentById(@Param("id") Long id);
-
 
     /*受講生情報、コース情報、受講情報全てを取得する。*/
     @Query("SELECT s FROM Student s JOIN FETCH s.studentCourses sc JOIN FETCH sc.course")
@@ -407,11 +415,11 @@ public interface StudentRepository {
     @Update("""
                 UPDATE students_courses
                 SET
-                course_name = #{courseName},
-                start_date = #{startDate},
-                end_date = #{endDate}
+                    course_name = #{courseName},
+                    start_date = #{startDate},
+                    end_date = #{endDate}
                 WHERE
-                id = #{courseId}
+                    id = #{id}
             """)
     int updateStudentCourse(StudentsCourse studentsCourse);
 

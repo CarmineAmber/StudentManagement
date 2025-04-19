@@ -8,9 +8,11 @@ import lombok.Setter;
 
 import java.util.Objects;
 
+/*受講状況に関するクラス。DTOとは、Data Transfer Objectの略である*/
 @Getter
 @Setter
 @NoArgsConstructor
+@AllArgsConstructor
 public class CourseStatusDTO {
     private Integer studentsCoursesId;
     private String courseName;
@@ -19,48 +21,18 @@ public class CourseStatusDTO {
     private String status;
     private Integer courseId;
 
-    // 引数を受け取るコンストラクタを追加
+    // 引数を受け取るコンストラクタ
     public CourseStatusDTO(Integer studentsCoursesId, String status) {
         this.studentsCoursesId = studentsCoursesId;
         this.status = status;
     }
 
-    public Integer getStudentsCoursesId() {
-        return studentsCoursesId;
-    }
-
-    public void setStudentsCoursesId(Integer studentsCoursesId) {
-        this.studentsCoursesId = studentsCoursesId;
-    }
-
-    public String getCourseName() {
-        return courseName;
-    }
-
-    public void setCourseName(String courseName) {
-        this.courseName = courseName;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public Integer getCourseId() {
-        return courseId;
-    }
-
-    public void setCourseId(Integer courseId) {
-        this.courseId = courseId;
-    }
-
+    /*これら２つのOverrideは、StudentsCoursesIdのみを元に判断し、studentsCourseIdが
+     * 同じであれば同一とみなすためのものである。*/
     @Override
     public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
+        if ( this == obj ) return true;
+        if ( obj == null || getClass() != obj.getClass() ) return false;
         CourseStatusDTO that = (CourseStatusDTO) obj;
         return Objects.equals(studentsCoursesId, that.studentsCoursesId);  // Null-safe equals check
     }

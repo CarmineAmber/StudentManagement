@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>受講生詳細情報</title>
+</head>
+<body>
+<h1>受講生詳細情報</h1>
+<div>
+    <p>名前: <span th:text="${studentDetail.student.studentName}"></span></p>
+    <p>カナ名: <span th:text="${studentDetail.student.furigana}"></span></p>
+    <p>ニックネーム: <span th:text="${studentDetail.student.nickname}"></span></p>
+    <p>メールアドレス: <span th:text="${studentDetail.student.email}"></span></p>
+    <p>地域: <span th:text="${studentDetail.student.region}"></span></p>
+    <p>年齢: <span th:text="${studentDetail.student.age}"></span></p>
+    <p>性別: <span th:text="${studentDetail.student.gender}"></span></p>
+    <p>備考: <span th:text="${studentDetail.student.remark}"></span></p>
+</div>
+
+<a th:href="@{/studentList}">戻る</a>
+<!--a href=はリンクを意味する。-->
+</body>
+</html>
